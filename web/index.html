@@ -110,6 +110,27 @@
   </section>
 
   <section>
+    <h2>Live answer · one voice</h2>
+    <p style="margin:0 0 10px;color:var(--muted)">What the Voice Agent wants to say → safety gate → the app's voice → this speaker.
+      Needs <code>python3 server/speak_server.py</code> and this page opened at <code>localhost:8766</code>.</p>
+    <div class="controls" style="margin-top:0">
+      <input id="say-text" value="No, nothing by mouth." style="flex:1;min-width:240px;font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#0b0d11;color:var(--text)">
+      <select id="say-state" style="font:inherit;padding:7px;border-radius:8px;background:#20242d;color:var(--text);border:1px solid var(--line)">
+        <option value="active">during CPR</option>
+        <option value="handoff">after handoff</option>
+      </select>
+      <button id="say-go">Speak</button>
+    </div>
+    <div class="controls">
+      <button data-say="Hands-only CPR is fine if you're not trained.">Passes</button>
+      <button data-say="You can stop compressions now, he looks fine.">Forbidden: stop</button>
+      <button data-say="Give him 0.3 mg of epinephrine.">Forbidden: dose</button>
+      <button data-say="Hands only CPR is completely fine if you have never been trained and you are alone with him right now.">Too long</button>
+    </div>
+    <div id="say-status" style="margin-top:8px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:12px">—</div>
+  </section>
+
+  <section>
     <h2>Clips</h2>
     <div class="grid" id="clips"></div>
   </section>
@@ -325,6 +346,58 @@ ac.addEventListener('metronome', ({ detail: d }) => {
 ac.addEventListener('state', ({ detail: d }) => log(`<b>ctx</b>    ${d.state}`));
 ac.addEventListener('user', ({ detail: d }) => log(`<b>caller</b> ${d.speaking ? 'speaking — we step back' : 'stopped'}`));
 
+// --- live answer through the reference /speak endpoint ------------------------
+
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+let sayN = 0;
+async function speak(text, protocolState) {
+  const t0 = performance.now();
+  const noServer = 'No speak server here. Run: python3 server/speak_server.py, then open http://localhost:8766';
+  let res;
+  try {
+    res = await fetch('speak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, protocol_state: protocolState }),
+    });
+  } catch {
+    $('say-status').textContent = noServer;
+    return;
+  }
+  if ([404, 405, 501].includes(res.status)) {
+    $('say-status').textContent = noServer;
+    return;
+  }
+  if (!res.ok) {
+    $('say-status').textContent = `speak ${res.status}: ${await res.text()}`;
+    return;
+  }
+  const spoken = decodeURIComponent(res.headers.get('X-Spoken-Text') || '');
+  const verdict = res.headers.get('X-Gate') + (res.headers.get('X-Gate-Reason') ? ` (${res.headers.get('X-Gate-Reason')})` : '');
+  const upstream = res.headers.get('X-Upstream-Ms');
+  const id = `say-${++sayN}`;
+  const onStart = ({ detail: d }) => {
+    if (d.id !== id) return;
+    ac.removeEventListener('clipstart', onStart);
+    const out = ((ac.ctx.baseLatency || 0) + (ac.ctx.outputLatency || 0)) * 1000;
+    const ms = Math.round(performance.now() - t0 + (d.startAt - ac.ctx.currentTime) * 1000 + out);
+    $('say-status').textContent = `gate: ${verdict} · “${spoken}” · ElevenLabs answered in ${upstream} ms · click → sound ${ms} ms`;
+  };
+  ac.addEventListener('clipstart', onStart);
+  log(`<b>say</b>    [gate ${esc(verdict)}] ${esc(spoken)}`);
+  await ac.playPcmResponse(res, { id, text: spoken });
+}
+$('say-go').onclick = () => speak($('say-text').value, $('say-state').value);
+$('say-text').onkeydown = (e) => {
+  if (e.key === 'Enter') speak($('say-text').value, $('say-state').value);
+};
+for (const b of document.querySelectorAll('[data-say]')) {
+  b.onclick = () => {
+    $('say-text').value = b.dataset.say;
+    speak(b.dataset.say, $('say-state').value);
+  };
+}
+
 const caller = $('caller');
 caller.onpointerdown = () => ac.userSpeaking(true);
 caller.onpointerup = caller.onpointerleave = () => ac.userSpeaking(false);
@@ -403,8 +476,9 @@ function frame() {
 
   g.fillStyle = '#5b6273';
   g.font = `${11 * dpr}px ui-monospace, Menlo, monospace`;
-  g.fillText(`${METRO_PEAK_DB} dB`, 6 * dpr, y(METRO_PEAK_DB) - 4 * dpr);
-  g.fillText(`${METRO_PEAK_DB + DEFAULTS.duckDb} dB`, 6 * dpr, y(METRO_PEAK_DB + DEFAULTS.duckDb) - 4 * dpr);
+  // The two lines sit only a few dB apart: one label row under the lower line.
+  const labelY = y(METRO_PEAK_DB + DEFAULTS.duckDb) + 12 * dpr;
+  g.fillText(`lines: click ${METRO_PEAK_DB} dB · ducked ${METRO_PEAK_DB + DEFAULTS.duckDb} dB`, 6 * dpr, labelY);
 }
 requestAnimationFrame(frame);
 </script>

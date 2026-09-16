@@ -84,6 +84,12 @@ My scope:
 - `web/audition.html` — voice audition page: plays the candidates through the controller, metronome underneath
 - `web/audition/` — audition renders + manifest (gitignored)
 - `web/leak-test.html` — measures how much of the app's voice leaks into the mic
+- `server/speak_server.py` — reference `POST /speak` (FastAPI): agent text → `safety_gate`
+  → ElevenLabs in the clips' voice (read from `web/audio/manifest.json`) → PCM16 24 kHz
+  stream. Also serves `web/`. Binds to 127.0.0.1 only — the key must not be reachable from
+  the network. A reference for Rana's backend, not the backend itself
+- `server/safety_gate.py` + `test_safety_gate.py` — the deterministic text gate from
+  `docs/agent-spec.md` section 4 (25 tests)
 - `video/voiceover/` — demo video narration, voice Eric (`voiceover` mode)
 - `.env` — `ELEVENLABS_API_KEY=...`, read by the renderer (gitignored, never commit)
 
@@ -94,7 +100,12 @@ python3 tools/render_directives.py placeholder             # macOS say, no API k
 python3 tools/render_directives.py audition --voices A B C # needs ELEVENLABS_API_KEY
 python3 tools/render_directives.py render --voice-id A
 python3 -m http.server 8765 -d web                         # bench at localhost:8765
+python3 server/speak_server.py                             # bench + /speak at localhost:8766
+python3 -m pytest -q server                                # safety gate tests
 ```
+
+Measured Sep 17 through the bench's "Live answer" panel: click → Sarah audible in
+294–361 ms (ElevenLabs answers in 207–276 ms); a critical clip cuts a live answer.
 
 ## Clip ids and priorities
 

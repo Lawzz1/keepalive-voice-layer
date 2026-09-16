@@ -50,7 +50,9 @@ browser ◀── HTTP streaming PCM ◀─────────────�
 - **Loudness:** the stream arrives ~1.7 dB quieter than the clips; the controller
   lifts it (`streamGainDb`).
 - **Key safety:** the ElevenLabs key stays on the backend. The browser only calls
-  our endpoint, e.g. `POST /speak {text}` → `audio/L16` stream.
+  our endpoint: `POST /speak {text, protocol_state}` → a raw little-endian PCM16
+  24 kHz mono stream (`application/octet-stream`; not `audio/L16`, which is
+  big-endian). A working reference is in `server/speak_server.py`.
 - **Fast path stays:** rib crack, soft surface and vomiting are reported as events
   and answered by the pre-recorded clips in ~20 ms. No generation at all.
 
