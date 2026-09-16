@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keep-Alive · audio bench</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #262a33; --text: #e7e9ee; --muted: #8b91a0;
+    --critical: #ff4d4f; --normal: #4c8dff; --response: #2ec28a;
+    --metro: #6aa3ff; --voice: #ffb14a; --gate: rgba(255, 77, 79, 0.10);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 20px 16px 40px; display: grid; gap: 14px; }
+  header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 18px; margin: 0; font-weight: 650; }
+  .badge { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 2px 10px; }
+  .badge.warn { color: #ffcf6b; border-color: #5a4a1e; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  button { font: inherit; color: var(--text); background: #20242d; border: 1px solid var(--line);
+           border-radius: 8px; padding: 8px 12px; cursor: pointer; text-align: left; }
+  button:hover { background: #272c37; }
+  button:disabled { opacity: .45; cursor: default; }
+  .status { display: grid; grid-template-columns: auto auto 1fr; gap: 16px; align-items: center; }
+  .beat { width: 44px; height: 44px; border-radius: 50%; background: var(--metro); opacity: .15; }
+  .gate { font-weight: 650; font-size: 12px; letter-spacing: .05em; padding: 6px 10px; border-radius: 6px;
+          background: #1c2a22; color: var(--response); min-width: 110px; text-align: center; }
+  .gate.on { background: #3a1a1c; color: var(--critical); }
+  .now { min-height: 42px; }
+  .now .id { font-size: 12px; color: var(--muted); }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  canvas { width: 100%; height: 170px; display: block; border-radius: 6px; background: #0b0d11; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .col { display: grid; gap: 6px; align-content: start; }
+  .col h3 { font-size: 12px; margin: 0 0 2px; font-weight: 650; }
+  .clip { border-left: 3px solid var(--c); }
+  .clip small { display: block; color: var(--muted); font-size: 11px; }
+  .scenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+  .scenarios button small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .two { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+  @media (max-width: 700px) { .two { grid-template-columns: 1fr; } .status { grid-template-columns: auto 1fr; } .now { grid-column: 1 / -1; } }
+  ol { margin: 0; padding-left: 20px; min-height: 20px; }
+  ol li { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  .log { font-family: ui-monospace, Menlo, monospace; font-size: 12px; max-height: 220px; overflow: auto; white-space: pre; color: var(--muted); }
+  .log b { color: var(--text); font-weight: 500; }
+  #unlock { position: fixed; inset: 0; background: rgba(8,10,13,.92); display: grid; place-items: center; z-index: 10; }
+  #unlock button { font-size: 18px; padding: 18px 28px; background: var(--critical); border: 0; text-align: center; }
+  #unlock p { color: var(--muted); text-align: center; margin: 14px 0 0; }
+</style>
+</head>
+<body>
+<div id="unlock">
+  <div>
+    <button id="start" disabled>Loading clips…</button>
+    <p id="load-msg">Audio needs a tap before it can play.</p>
+  </div>
+</div>
+
+<main>
+  <header>
+    <h1>keep-Alive · audio bench</h1>
+    <span class="badge" id="voice-badge">—</span>
+    <span class="badge" id="spec-badge">—</span>
+  </header>
+
+  <section>
+    <div class="status">
+      <div class="beat" id="beat"></div>
+      <div class="gate" id="gate">MIC OPEN</div>
+      <div class="now"><div class="id" id="now-id">idle</div><div id="now-text"></div></div>
+    </div>
+    <div class="controls">
+      <button id="metro-toggle">Start metronome</button>
+      <label>BPM <input id="bpm" type="number" min="100" max="120" value="110" style="width:64px"></label>
+      <button id="stop">Stop voice</button>
+      <button id="mic-test">Mic → STT test</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Levels, last 6 s</h2>
+    <canvas id="scope"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--metro)"></i>metronome bus</span>
+      <span><i style="background:var(--voice)"></i>voice bus</span>
+      <span><i style="background:#ff4d4f55"></i>mic gated</span>
+      <span id="mic-legend" hidden><i style="background:#7bd88f"></i>mic → STT (after gate)</span>
+      <span>dashed lines: metronome peak, and the peak while ducked</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Scenarios</h2>
+    <div class="scenarios">
+      <button data-scenario="protocol">Protocol run<small>4 normal lines back to back, beat ducked throughout</small></button>
+      <button data-scenario="agonal">Agonal cut-in<small>critical cuts “position” mid-line, which replays after</small></button>
+      <button data-scenario="question">Question mid-line<small>answer waits for the current line, jumps the queue</small></button>
+      <button data-scenario="paramedics">Paramedics arrive<small>flush queue, final line, metronome off</small></button>
+      <button data-scenario="agent">Agent reply<small>simulated Voice Agent stream: PCM16 chunks after ~0.7 s of thinking</small></button>
+      <button data-scenario="agentCut">Critical cuts the agent<small>agent mid-answer, then “gasping”: the agent is cut, the alert plays</small></button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Clips</h2>
+    <div class="grid" id="clips"></div>
+  </section>
+
+  <div class="two">
+    <section><h2>Queue</h2><ol id="queue"></ol></section>
+    <section><h2>Events</h2><div class="log" id="log"></div></section>
+  </div>
+</main>
+
+<script type="module">
+import { AudioController, DEFAULTS } from './audio-controller.js';
+
+const $ = (id) => document.getElementById(id);
+const ac = new AudioController();
+window.ac = ac; // poke at it from the console
+
+const COLORS = { critical: 'var(--critical)', normal: 'var(--normal)', response: 'var(--response)' };
+const t0 = performance.now();
+
+function log(msg) {
+  const el = $('log');
+  const ms = String(Math.round(performance.now() - t0)).padStart(7, ' ');
+  el.innerHTML = `${ms}  ${msg}\n` + el.innerHTML.split('\n').slice(0, 80).join('\n');
+}
+
+// --- load ----------------------------------------------------------------------
+
+try {
+  const manifest = await ac.load('audio/manifest.json');
+  const s = manifest.spec;
+  const placeholder = s.engine === 'say';
+  $('voice-badge').textContent = placeholder ? 'placeholder voice (macOS say)' : `${s.engine} · ${s.voice_id}`;
+  $('voice-badge').classList.toggle('warn', placeholder);
+  $('spec-badge').textContent = `${s.lufs} LUFS · ${s.true_peak_dbtp} dBTP · ${s.sample_rate / 1000} kHz`;
+  renderClips(manifest.clips);
+  $('start').disabled = false;
+  $('start').textContent = 'Start';
+} catch (err) {
+  $('start').textContent = 'No clips';
+  $('load-msg').textContent = `${err.message} — run: python3 tools/render_directives.py placeholder`;
+}
+
+$('start').onclick = async () => {
+  await ac.unlock();
+  navigator.wakeLock?.request('screen').catch(() => {});
+  $('unlock').hidden = true;
+  log(`<b>unlocked</b> ctx ${ac.ctx.sampleRate} Hz, base latency ${Math.round((ac.ctx.baseLatency || 0) * 1000)} ms`);
+};
+
+function renderClips(clips) {
+  const groups = { critical: [], normal: [], response: [] };
+  for (const [id, c] of Object.entries(clips)) groups[c.priority].push([id, c]);
+  $('clips').innerHTML = '';
+  for (const [prio, items] of Object.entries(groups)) {
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.innerHTML = `<h3 style="color:${COLORS[prio]}">${prio}</h3>`;
+    for (const [id, c] of items) {
+      const b = document.createElement('button');
+      b.className = 'clip';
+      b.style.setProperty('--c', COLORS[prio]);
+      b.innerHTML = `${id}<small>${(c.duration_ms / 1000).toFixed(1)} s</small>`;
+      b.title = c.text;
+      b.onclick = () => ac.play(id);
+      col.appendChild(b);
+    }
+    $('clips').appendChild(col);
+  }
+}
+
+// --- controls ------------------------------------------------------------------
+
+$('metro-toggle').onclick = () => {
+  if (ac.metronomeRunning) ac.stopMetronome();
+  else ac.startMetronome(Number($('bpm').value));
+};
+$('bpm').onchange = () => { if (ac.metronomeRunning) ac.startMetronome(Number($('bpm').value)); };
+$('stop').onclick = () => ac.stop();
+
+// What the STT sender would receive: the mic after the gate. Between lines it
+// also shows how much of the metronome leaks from the speakers into the mic.
+let micTap = null;
+$('mic-test').onclick = async () => {
+  if (micTap) return;
+  try {
+    const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true } });
+    micTap = ac.ctx.createAnalyser();
+    micTap.fftSize = 2048;
+    ac.ctx.createMediaStreamSource(ac.gateMic(mic)).connect(micTap);
+    $('mic-legend').hidden = false;
+    $('mic-test').disabled = true;
+    log('<b>mic</b>    live — green trace is what STT receives');
+  } catch (err) {
+    log(`<b>mic</b>    ${err.message}`);
+  }
+};
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const once = (type, pred) => new Promise((r) => {
+  const h = (e) => { if (pred(e.detail)) { ac.removeEventListener(type, h); r(e.detail); } };
+  ac.addEventListener(type, h);
+});
+
+// Stands in for the Voice Agent: resamples a clip to 24 kHz PCM16 and pushes it in
+// 40 ms chunks, the way `reply.audio` arrives. Resolves once the reply has opened.
+async function simulateAgentReply(clipId, thinkMs = 700) {
+  const src = ac.clips.get(clipId).buffer;
+  const off = new OfflineAudioContext(1, Math.ceil(src.duration * 24000), 24000);
+  const node = off.createBufferSource();
+  node.buffer = src;
+  node.connect(off.destination);
+  node.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+
+  const turnEndedAt = performance.now(); // as if the caller just stopped talking
+  await wait(thinkMs);                    // the agent thinking
+  const reply = ac.openStream({ text: '(simulated Voice Agent reply)', turnEndedAt });
+  const CHUNK = 960; // 40 ms at 24 kHz
+  let i = 0;
+  const timer = setInterval(() => {
+    if (i >= pcm.length) {
+      clearInterval(timer);
+      reply.end();
+      return;
+    }
+    const part = pcm.subarray(i, i + CHUNK);
+    i += CHUNK;
+    const int16 = new Int16Array(part.length);
+    for (let k = 0; k < part.length; k++) int16[k] = Math.max(-1, Math.min(1, part[k])) * 32767;
+    reply.push(int16);
+  }, 40);
+  return reply;
+}
+
+const SCENARIOS = {
+  async agent() {
+    if (!ac.metronomeRunning) ac.startMetronome();
+    simulateAgentReply('qa_fallback');
+  },
+  async agentCut() {
+    if (!ac.metronomeRunning) ac.startMetronome();
+    await simulateAgentReply('qa_vomit');
+    await wait(1500);
+    ac.play('cpr_02_agonal');
+  },
+  async protocol() {
+    if (!ac.metronomeRunning) ac.startMetronome();
+    for (const id of ['cpr_01_confirm', 'cpr_03_position', 'cpr_04_start_beat', 'cpr_05_recoil']) ac.play(id);
+  },
+  async agonal() {
+    if (!ac.metronomeRunning) ac.startMetronome();
+    ac.play('cpr_03_position');
+    ac.play('cpr_04_start_beat');
+    await wait(1500);
+    ac.play('cpr_02_agonal');
+  },
+  async question() {
+    if (!ac.metronomeRunning) ac.startMetronome();
+    ac.play('cpr_04_start_beat');
+    ac.play('cpr_05_recoil');
+    await wait(1200);
+    ac.play('qa_rib_pop');
+  },
+  async paramedics() {
+    ac.stop();
+    ac.play('cpr_06_paramedics');
+    await once('clipend', (d) => d.id === 'cpr_06_paramedics');
+    ac.stopMetronome();
+  },
+};
+for (const b of document.querySelectorAll('[data-scenario]')) {
+  b.onclick = () => { log(`<b>scenario</b> ${b.dataset.scenario}`); SCENARIOS[b.dataset.scenario](); };
+}
+
+// --- controller events ---------------------------------------------------------
+
+ac.addEventListener('clipstart', ({ detail: d }) => {
+  const lat = d.turnLatencyMs != null ? ` · caller stop→agent sound ${d.turnLatencyMs} ms`
+    : d.latencyMs != null ? ` · trigger→sound ${d.latencyMs} ms` : '';
+  const len = d.duration ? `${d.duration.toFixed(1)}s` : 'stream';
+  log(`<b>start</b>  ${d.id} [${d.priority}] ${len}${lat}`);
+  $('now-id').textContent = `${d.id} · ${d.priority}${lat}`;
+  $('now-id').style.color = COLORS[d.priority];
+  $('now-text').textContent = d.text;
+});
+ac.addEventListener('clipend', ({ detail: d }) => {
+  log(`<b>end</b>    ${d.id} (${d.reason})`);
+  if (!ac.nowPlaying) { $('now-id').textContent = 'idle'; $('now-id').style.color = ''; $('now-text').textContent = ''; }
+});
+ac.addEventListener('queue', ({ detail: d }) => {
+  $('queue').innerHTML = d.queued.map((id) => `<li>${id}</li>`).join('') || '<li style="list-style:none;color:var(--muted)">empty</li>';
+});
+ac.addEventListener('gate', ({ detail: d }) => {
+  gateLog.push({ t: ac.ctx.currentTime, on: d.gated });
+  $('gate').textContent = d.gated ? 'MIC GATED' : 'MIC OPEN';
+  $('gate').classList.toggle('on', d.gated);
+  log(`<b>gate</b>   ${d.gated ? 'closed — STT paused' : 'open'}`);
+});
+ac.addEventListener('metronome', ({ detail: d }) => {
+  $('metro-toggle').textContent = d.running ? 'Stop metronome' : 'Start metronome';
+  log(`<b>metro</b>  ${d.running ? `on ${d.bpm} BPM` : 'off'}`);
+});
+ac.addEventListener('state', ({ detail: d }) => log(`<b>ctx</b>    ${d.state}`));
+
+// --- level scope ---------------------------------------------------------------
+
+const WINDOW_S = 6;
+const canvas = $('scope');
+const g = canvas.getContext('2d');
+const hist = [];
+const gateLog = [];
+const bufM = new Float32Array(ac.taps.metro.fftSize);
+const bufV = new Float32Array(ac.taps.voice.fftSize);
+const bufK = new Float32Array(2048);
+const METRO_PEAK_DB = DEFAULTS.metronomeGainDb;
+
+const peakDb = (buf) => {
+  let p = 0;
+  for (let i = 0; i < buf.length; i++) p = Math.max(p, Math.abs(buf[i]));
+  return 20 * Math.log10(p || 1e-6);
+};
+
+function frame() {
+  requestAnimationFrame(frame);
+  const now = ac.ctx.currentTime;
+
+  const bp = ac.beatPhase();
+  $('beat').style.opacity = bp ? 0.15 + 0.85 * Math.pow(1 - bp.phase, 4) : 0.15;
+
+  ac.taps.metro.getFloatTimeDomainData(bufM);
+  ac.taps.voice.getFloatTimeDomainData(bufV);
+  let k = null;
+  if (micTap) { micTap.getFloatTimeDomainData(bufK); k = peakDb(bufK); }
+  hist.push({ t: now, m: peakDb(bufM), v: peakDb(bufV), k });
+  while (hist.length && hist[0].t < now - WINDOW_S) hist.shift();
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth * dpr, H = canvas.clientHeight * dpr;
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  g.clearRect(0, 0, W, H);
+
+  const x = (t) => W - ((now - t) / WINDOW_S) * W;
+  const y = (db) => H - ((Math.max(db, -60) + 60) / 60) * (H - 8) - 4;
+
+  // gated spans
+  g.fillStyle = 'rgba(255, 77, 79, 0.13)';
+  for (let i = 0; i < gateLog.length; i++) {
+    if (!gateLog[i].on) continue;
+    const end = gateLog[i + 1] ? gateLog[i + 1].t : now;
+    if (end < now - WINDOW_S) continue;
+    g.fillRect(x(gateLog[i].t), 0, x(end) - x(gateLog[i].t), H);
+  }
+
+  // reference lines: metronome peak, and that peak ducked by duckDb
+  g.setLineDash([4 * dpr, 4 * dpr]);
+  g.lineWidth = dpr;
+  g.strokeStyle = '#3a4150';
+  for (const db of [METRO_PEAK_DB, METRO_PEAK_DB + DEFAULTS.duckDb]) {
+    g.beginPath(); g.moveTo(0, y(db)); g.lineTo(W, y(db)); g.stroke();
+  }
+  g.setLineDash([]);
+
+  for (const [key, color] of [['m', '#6aa3ff'], ['v', '#ffb14a'], ['k', '#7bd88f']]) {
+    g.strokeStyle = color;
+    g.lineWidth = 1.5 * dpr;
+    g.beginPath();
+    let pen = false;
+    for (const h of hist) {
+      if (h[key] == null) { pen = false; continue; }
+      if (pen) g.lineTo(x(h.t), y(h[key]));
+      else g.moveTo(x(h.t), y(h[key]));
+      pen = true;
+    }
+    g.stroke();
+  }
+
+  g.fillStyle = '#5b6273';
+  g.font = `${11 * dpr}px ui-monospace, Menlo, monospace`;
+  g.fillText(`${METRO_PEAK_DB} dB`, 6 * dpr, y(METRO_PEAK_DB) - 4 * dpr);
+  g.fillText(`${METRO_PEAK_DB + DEFAULTS.duckDb} dB`, 6 * dpr, y(METRO_PEAK_DB + DEFAULTS.duckDb) - 4 * dpr);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

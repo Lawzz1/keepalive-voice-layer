@@ -1,0 +1,88 @@
+{
+  "spec": {
+    "engine": "elevenlabs",
+    "voice_id": "EXAVITQu4vr4xnSDxMaL",
+    "model_id": "eleven_flash_v2_5",
+    "voice_settings": {
+      "stability": 0.75,
+      "similarity_boost": 0.75,
+      "style": 0.0,
+      "use_speaker_boost": true,
+      "speed": 0.95
+    },
+    "lufs": -14.0,
+    "true_peak_dbtp": -1.0,
+    "sample_rate": 48000,
+    "channels": 1,
+    "format": "wav_pcm_s16le",
+    "generated_at": "2026-09-16T01:02:31Z"
+  },
+  "clips": {
+    "cpr_01_confirm": {
+      "file": "cpr_01_confirm.wav",
+      "text": "Call 911 now and put it on speaker! Roll the patient flat on their back. Kneel beside their chest.",
+      "priority": "normal",
+      "duration_ms": 5819
+    },
+    "cpr_02_agonal": {
+      "file": "cpr_02_agonal.wav",
+      "text": "Do not stop. Gasping is agonal breathing, not normal breathing. Kneel beside their chest immediately.",
+      "priority": "critical",
+      "duration_ms": 6819
+    },
+    "cpr_03_position": {
+      "file": "cpr_03_position.wav",
+      "text": "Place the heel of one hand on the center of the chest. Interlock your other hand on top. Lock your elbows straight.",
+      "priority": "normal",
+      "duration_ms": 6567
+    },
+    "cpr_04_start_beat": {
+      "file": "cpr_04_start_beat.wav",
+      "text": "Push hard and fast to this beat. Push down two inches, then let the chest come all the way up. One, two, three, four.",
+      "priority": "normal",
+      "duration_ms": 8297
+    },
+    "cpr_05_recoil": {
+      "file": "cpr_05_recoil.wav",
+      "text": "Keep pushing to the beat. Allow full chest recoil. Do not lean on the chest.",
+      "priority": "normal",
+      "duration_ms": 4714
+    },
+    "cpr_07_aed": {
+      "file": "cpr_07_aed.wav",
+      "text": "If anyone is with you, send them to find an AED right now. Do not stop pushing.",
+      "priority": "normal",
+      "duration_ms": 4545
+    },
+    "cpr_06_paramedics": {
+      "file": "cpr_06_paramedics.wav",
+      "text": "Stop compressions and step back. Let the paramedics take over. The emergency timeline is saved on your screen. Take a slow, deep breath.",
+      "priority": "normal",
+      "duration_ms": 8697
+    },
+    "qa_rib_pop": {
+      "file": "qa_rib_pop.wav",
+      "text": "A rib pop can happen during effective CPR. Do not stop, keep pushing to the beat.",
+      "priority": "response",
+      "duration_ms": 4757
+    },
+    "qa_bed_surface": {
+      "file": "qa_bed_surface.wav",
+      "text": "Move them to a firm floor if you can do so safely. Then resume pushing.",
+      "priority": "response",
+      "duration_ms": 4086
+    },
+    "qa_vomit": {
+      "file": "qa_vomit.wav",
+      "text": "Roll them onto their side, clear the mouth, roll them back and immediately resume compressions.",
+      "priority": "response",
+      "duration_ms": 5319
+    },
+    "qa_fallback": {
+      "file": "qa_fallback.wav",
+      "text": "Continue chest compressions to the beat. Emergency services will guide further.",
+      "priority": "response",
+      "duration_ms": 4382
+    }
+  }
+}

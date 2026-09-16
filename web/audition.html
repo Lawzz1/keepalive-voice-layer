@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keep-Alive · voice audition</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #262a33; --text: #e7e9ee; --muted: #8b91a0;
+    --accent: #ffb14a; --metro: #6aa3ff; --fav: #ffcf6b;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 20px 16px 40px; display: grid; gap: 14px; }
+  header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  h1 { font-size: 18px; margin: 0 auto 0 0; font-weight: 650; }
+  .hint { color: var(--muted); margin: 0; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+  button { font: inherit; color: var(--text); background: #20242d; border: 1px solid var(--line);
+           border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  button:hover { background: #272c37; }
+  button.playing { border-color: var(--accent); color: var(--accent); }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .beat { width: 16px; height: 16px; border-radius: 50%; background: var(--metro); opacity: .15; }
+  .now { color: var(--accent); min-height: 20px; }
+  .voices { display: grid; gap: 8px; }
+  .voice { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+           display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; }
+  .voice.fav { border-color: #5a4a1e; }
+  .voice.active { border-color: var(--accent); }
+  .star { background: none; border: 0; font-size: 22px; padding: 0 2px; color: #4a4f5c; }
+  .star:hover { background: none; color: var(--fav); }
+  .star.on { color: var(--fav); }
+  .name { font-weight: 650; font-size: 15px; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .id { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #5b6273; user-select: all; }
+  pre { margin: 0; font: 12px/1.6 ui-monospace, Menlo, monospace; white-space: pre-wrap; user-select: all; }
+  @media (max-width: 640px) { .voice { grid-template-columns: auto 1fr; } .voice .row { grid-column: 1 / -1; } }
+  #unlock { position: fixed; inset: 0; background: rgba(8,10,13,.92); display: grid; place-items: center; z-index: 10; text-align: center; }
+  #unlock button { font-size: 18px; padding: 18px 28px; background: #ff4d4f; border: 0; }
+  #unlock p { color: var(--muted); margin: 14px 0 0; }
+</style>
+</head>
+<body>
+<div id="unlock">
+  <div>
+    <button id="start" disabled>Loading voices…</button>
+    <p id="load-msg">Starts the 110 BPM metronome — every line plays over it, ducked like in the app.</p>
+  </div>
+</div>
+
+<main>
+  <header>
+    <h1>keep-Alive · voice audition</h1>
+    <div class="beat" id="beat"></div>
+    <button id="metro">Metronome off</button>
+    <button id="stop">Stop</button>
+  </header>
+  <p class="hint">Demo laptop, demo volume, from where the audience sits. Judge the alert line hardest:
+    it has to sound urgent without sounding scared. ★ marks a favourite.</p>
+
+  <section>
+    <h2>Same line, every voice in a row</h2>
+    <div class="row" id="compare"></div>
+    <div class="now" id="now"></div>
+  </section>
+
+  <div class="voices" id="voices"></div>
+
+  <section id="pick" hidden>
+    <h2>Render the full set with a favourite</h2>
+    <pre id="pick-cmd"></pre>
+  </section>
+</main>
+
+<script type="module">
+import { AudioController } from './audio-controller.js';
+
+const $ = (id) => document.getElementById(id);
+const ac = new AudioController();
+window.ac = ac;
+
+const TAGS = ['short', 'long', 'alert'];
+let favs = new Set();
+try { favs = new Set(JSON.parse(localStorage.getItem('ka-audition-favs') || '[]')); } catch {}
+const saveFavs = () => { try { localStorage.setItem('ka-audition-favs', JSON.stringify([...favs])); } catch {} };
+
+let manifest = null;
+try {
+  manifest = await ac.load('audition/manifest.json');
+  render();
+  $('start').disabled = false;
+  $('start').textContent = 'Start';
+} catch {
+  $('start').textContent = 'No auditions yet';
+  $('load-msg').textContent = 'Run: python3 tools/render_directives.py audition --voices ID1 ID2 …';
+}
+
+$('start').onclick = async () => {
+  await ac.unlock();
+  ac.startMetronome();
+  $('unlock').hidden = true;
+};
+$('metro').onclick = () => (ac.metronomeRunning ? ac.stopMetronome() : ac.startMetronome());
+$('stop').onclick = () => ac.stop();
+ac.addEventListener('metronome', (e) => { $('metro').textContent = e.detail.running ? 'Metronome off' : 'Metronome on'; });
+
+const playOnly = (ids) => { ac.stop(); ids.filter((id) => ac.clips.has(id)).forEach((id) => ac.play(id)); };
+
+function render() {
+  const voiceIds = Object.keys(manifest.voices);
+
+  $('compare').innerHTML = '';
+  for (const tag of TAGS) {
+    const b = document.createElement('button');
+    b.textContent = `${tag} × ${voiceIds.length}`;
+    b.onclick = () => playOnly(voiceIds.map((v) => `${v}__${tag}`));
+    $('compare').appendChild(b);
+  }
+
+  $('voices').innerHTML = '';
+  for (const id of voiceIds) {
+    const v = manifest.voices[id];
+    const l = v.labels || {};
+    const row = document.createElement('div');
+    row.className = 'voice' + (favs.has(id) ? ' fav' : '');
+    row.dataset.voice = id;
+
+    const star = document.createElement('button');
+    star.className = 'star' + (favs.has(id) ? ' on' : '');
+    star.textContent = '★';
+    star.title = 'favourite';
+    star.onclick = () => { favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); render(); };
+
+    const info = document.createElement('div');
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = v.name;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = [l.gender, l.age, l.accent, l.use_case || l['use case'], l.description].filter(Boolean).join(' · ');
+    const vid = document.createElement('div');
+    vid.className = 'id';
+    vid.textContent = id;
+    info.append(name, meta, vid);
+
+    const plays = document.createElement('div');
+    plays.className = 'row';
+    for (const tag of TAGS) {
+      const clipId = `${id}__${tag}`;
+      if (!ac.clips.has(clipId)) continue;
+      const b = document.createElement('button');
+      b.textContent = tag;
+      b.dataset.clip = clipId;
+      b.onclick = () => playOnly([clipId]);
+      plays.appendChild(b);
+    }
+    const all = document.createElement('button');
+    all.textContent = 'all 3';
+    all.onclick = () => playOnly(TAGS.map((t) => `${id}__${t}`));
+    plays.appendChild(all);
+
+    row.append(star, info, plays);
+    $('voices').appendChild(row);
+  }
+
+  const picked = [...favs].filter((id) => manifest.voices[id]);
+  $('pick').hidden = picked.length === 0;
+  $('pick-cmd').textContent = picked
+    .map((id) => `python3 tools/render_directives.py render --voice-id ${id}   # ${manifest.voices[id].name}`)
+    .join('\n');
+}
+
+function markPlaying(clipId) {
+  document.querySelectorAll('.playing').forEach((el) => el.classList.remove('playing'));
+  document.querySelectorAll('.voice.active').forEach((el) => el.classList.remove('active'));
+  if (!clipId) { $('now').textContent = ''; return; }
+  const clip = manifest.clips[clipId];
+  document.querySelector(`[data-clip="${clipId}"]`)?.classList.add('playing');
+  document.querySelector(`[data-voice="${clip.voice_id}"]`)?.classList.add('active');
+  $('now').textContent = `▶ ${manifest.voices[clip.voice_id].name} — ${clip.tag}`;
+}
+ac.addEventListener('clipstart', (e) => markPlaying(e.detail.id));
+ac.addEventListener('clipend', () => { if (!ac.nowPlaying) markPlaying(null); });
+
+(function frame() {
+  requestAnimationFrame(frame);
+  const bp = ac.beatPhase();
+  $('beat').style.opacity = bp ? 0.15 + 0.85 * Math.pow(1 - bp.phase, 4) : 0.15;
+})();
+</script>
+</body>
+</html>
