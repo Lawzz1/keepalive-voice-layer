@@ -83,6 +83,8 @@ My scope:
 - `web/audio/` — rendered clips + `manifest.json` (generated, gitignored until the voice is locked)
 - `web/audition.html` — voice audition page: plays the candidates through the controller, metronome underneath
 - `web/audition/` — audition renders + manifest (gitignored)
+- `web/leak-test.html` — measures how much of the app's voice leaks into the mic
+- `video/voiceover/` — demo video narration, voice Eric (`voiceover` mode)
 - `.env` — `ELEVENLABS_API_KEY=...`, read by the renderer (gitignored, never commit)
 
 ## Commands

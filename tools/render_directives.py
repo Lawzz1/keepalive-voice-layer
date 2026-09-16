@@ -14,6 +14,7 @@ Modes:
     render       render the full 10-clip protocol set with the chosen voice
     placeholder  render the full set with macOS `say` — no API key needed, lets the
                  controller run end-to-end before the voice is chosen
+    voiceover    render the demo video narration (a different voice from the app)
 
 Requirements:
     pip install requests
@@ -44,6 +45,7 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 AUDIO_DIR = ROOT / "web" / "audio"
 AUDITION_DIR = ROOT / "web" / "audition"   # served next to web/audition.html
+VOICEOVER_DIR = ROOT / "video" / "voiceover"
 
 API_BASE = "https://api.elevenlabs.io/v1"
 
@@ -153,6 +155,48 @@ DIRECTIVES = [
     },
 ]
 
+# Demo video narration (docs/demo-voiceover.md). Not played by the app, so no
+# need to match the live agent: a higher-quality model and a little more life
+# than the dispatcher read.
+NARRATOR_MODEL_ID = "eleven_multilingual_v2"
+NARRATOR_SETTINGS = {
+    "stability": 0.55,
+    "similarity_boost": 0.75,
+    "style": 0.15,
+    "use_speaker_boost": True,
+    "speed": 1.0,
+}
+
+VOICEOVER = [
+    {
+        "id": "vo_01_hook",
+        "text": "Your hands are busy saving a life. "
+                "Why does emergency software require your hands?",
+    },
+    {
+        "id": "vo_02_stat",
+        "text": "Every year, over 350,000 Americans have a cardiac arrest outside a hospital. "
+                "Most don't survive.",
+    },
+    {
+        "id": "vo_03_architecture",
+        # "Assembly A.I." with dots: the model stresses "A.I." instead of running it together
+        "text": "Assembly A.I. provides the ears, but it never makes the medical decision. "
+                "Every critical step comes from a locked protocol.",
+    },
+    {
+        "id": "vo_04_hybrid",
+        "text": "Protocol lines play in milliseconds. Questions nobody scripted go to "
+                "Assembly A.I.'s Voice Agent API, which answers in about a second. "
+                "And the metronome never stops.",
+    },
+    {
+        "id": "vo_05_close",
+        "text": "KeepAlive. When seconds count, your hands should save a life, "
+                "not hold a phone.",
+    },
+]
+
 # Short, long, critical — covers the three reads you need to judge a voice on.
 AUDITION_LINES = [
     ("short", "Roll the patient flat on their back now."),
@@ -213,12 +257,12 @@ def list_voices():
 # --- synthesis engines -------------------------------------------------------
 # Each engine is a function (text, tmp_dir) -> path of the raw audio it wrote.
 
-def elevenlabs_engine(voice_id, retries=3):
+def elevenlabs_engine(voice_id, model_id=MODEL_ID, settings=VOICE_SETTINGS, retries=3):
     url = f"{API_BASE}/text-to-speech/{voice_id}"
     headers = {"xi-api-key": api_key(), "Content-Type": "application/json"}
 
     def synth(text, tmp_dir):
-        payload = {"text": text, "model_id": MODEL_ID, "voice_settings": VOICE_SETTINGS}
+        payload = {"text": text, "model_id": model_id, "voice_settings": settings}
         for attempt in range(1, retries + 1):
             r = requests.post(url, json=payload, headers=headers, timeout=60)
             if r.status_code == 200:
@@ -414,7 +458,7 @@ def write_clips(out_dir, targets, synth, engine_spec, merge):
         manifest["clips"][d["id"]] = {
             "file": filename,
             "text": d["text"],
-            "priority": d["priority"],
+            "priority": d.get("priority", "narration"),
             "duration_ms": ms,
         }
 
@@ -458,6 +502,23 @@ def cmd_placeholder(args):
                 engine_spec, merge=False)
 
 
+def cmd_voiceover(args):
+    engine_spec = {
+        "engine": "elevenlabs",
+        "voice_id": args.voice_id,
+        "model_id": NARRATOR_MODEL_ID,
+        "voice_settings": NARRATOR_SETTINGS,
+    }
+    targets = VOICEOVER
+    if args.only:
+        targets = [d for d in VOICEOVER if d["id"] in args.only]
+        missing = set(args.only) - {d["id"] for d in targets}
+        if missing:
+            die(f"unknown id(s): {', '.join(sorted(missing))}")
+    synth = elevenlabs_engine(args.voice_id, NARRATOR_MODEL_ID, NARRATOR_SETTINGS)
+    write_clips(Path(args.out), targets, synth, engine_spec, merge=bool(args.only))
+
+
 def main():
     p = argparse.ArgumentParser(description="keep-Alive directive renderer")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -481,6 +542,13 @@ def main():
     p_ph.add_argument("--say-voice", help="macOS voice name (see `say -v '?'`)")
     p_ph.add_argument("--out", default=str(AUDIO_DIR))
     p_ph.set_defaults(func=cmd_placeholder, needs_ffmpeg=True)
+
+    p_vo = sub.add_parser("voiceover", help="render the demo video narration")
+    p_vo.add_argument("--voice-id", required=True, help="narrator voice — not the app's voice")
+    p_vo.add_argument("--only", nargs="+", metavar="ID",
+                      help="re-render only these lines; the others keep their take")
+    p_vo.add_argument("--out", default=str(VOICEOVER_DIR))
+    p_vo.set_defaults(func=cmd_voiceover, needs_ffmpeg=True)
 
     args = p.parse_args()
     load_dotenv()

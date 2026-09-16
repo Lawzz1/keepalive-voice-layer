@@ -50,7 +50,7 @@ agonal cut-in — those are the two moments nobody else has.
 pill: `Protocol: ~20 ms · Live agent: ~1.0 s`.
 
 **VO** (18 words, ~8 s):
-> AssemblyAI provides the ears, but it never makes the medical decision. Every
+> Assembly A.I. provides the ears, but it never makes the medical decision. Every
 > critical step comes from a locked protocol.
 
 ## 1:35–1:55 · Second emergency, or the hybrid in close-up
@@ -65,7 +65,7 @@ above the wound.
 
 **VO for option B** (27 words, ~11 s):
 > Protocol lines play in milliseconds. Questions nobody scripted go to
-> AssemblyAI's Voice Agent API, which answers in about a second. And the
+> Assembly A.I.'s Voice Agent API, which answers in about a second. And the
 > metronome never stops.
 
 ## 1:55–2:15 · Paramedics arrive
@@ -94,11 +94,30 @@ lablab.ai.
 |---|---|---|
 | Hook | 0:15 | 16 (optional) |
 | Live run | 1:10 | 0 |
-| Architecture | 0:10 | 18 |
+| Architecture | 0:10 | 19 |
 | Bleeding / hybrid | 0:20 | 0 / 27 |
 | Paramedics | 0:20 | 0 |
 | Close | 0:15 | 15 |
 | **Total** | **2:30** | **49–76** |
+
+## Rendered narration
+
+Voice: Eric (`cjVigY5qzO86Huf0OWal`), ElevenLabs Multilingual v2, -14 LUFS.
+Files in `video/voiceover/`; re-render with
+`python3 tools/render_directives.py voiceover --voice-id cjVigY5qzO86Huf0OWal`
+(text lives in `VOICEOVER` in the renderer). Add `--only <id>` to redo one line
+without changing the takes of the others.
+
+"AssemblyAI" is written **"Assembly A.I."** in the narration text: with the dots
+the model stresses "A.I." instead of running the name together (approved Sep 17).
+
+| File | Segment | Length |
+|---|---|---|
+| `vo_01_hook.wav` | Hook — the question on the black screen | 4.2 s |
+| `vo_02_stat.wav` | Hook — the statistic | 6.0 s |
+| `vo_03_architecture.wav` | Architecture | 6.4 s |
+| `vo_04_hybrid.wav` | Hybrid close-up (option B) | 9.8 s |
+| `vo_05_close.wav` | Close — the tagline | 4.4 s |
 
 ## Production checklist
 

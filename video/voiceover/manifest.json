@@ -1,0 +1,52 @@
+{
+  "spec": {
+    "engine": "elevenlabs",
+    "voice_id": "cjVigY5qzO86Huf0OWal",
+    "model_id": "eleven_multilingual_v2",
+    "voice_settings": {
+      "stability": 0.55,
+      "similarity_boost": 0.75,
+      "style": 0.15,
+      "use_speaker_boost": true,
+      "speed": 1.0
+    },
+    "lufs": -14.0,
+    "true_peak_dbtp": -1.0,
+    "sample_rate": 48000,
+    "channels": 1,
+    "format": "wav_pcm_s16le",
+    "generated_at": "2026-09-16T22:49:09Z"
+  },
+  "clips": {
+    "vo_01_hook": {
+      "file": "vo_01_hook.wav",
+      "text": "Your hands are busy saving a life. Why does emergency software require your hands?",
+      "priority": "narration",
+      "duration_ms": 4165
+    },
+    "vo_02_stat": {
+      "file": "vo_02_stat.wav",
+      "text": "Every year, over 350,000 Americans have a cardiac arrest outside a hospital. Most don't survive.",
+      "priority": "narration",
+      "duration_ms": 5953
+    },
+    "vo_03_architecture": {
+      "file": "vo_03_architecture.wav",
+      "text": "Assembly A.I. provides the ears, but it never makes the medical decision. Every critical step comes from a locked protocol.",
+      "priority": "narration",
+      "duration_ms": 6369
+    },
+    "vo_04_hybrid": {
+      "file": "vo_04_hybrid.wav",
+      "text": "Protocol lines play in milliseconds. Questions nobody scripted go to Assembly A.I.'s Voice Agent API, which answers in about a second. And the metronome never stops.",
+      "priority": "narration",
+      "duration_ms": 9783
+    },
+    "vo_05_close": {
+      "file": "vo_05_close.wav",
+      "text": "KeepAlive. When seconds count, your hands should save a life, not hold a phone.",
+      "priority": "narration",
+      "duration_ms": 4416
+    }
+  }
+}
