@@ -158,8 +158,17 @@ Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from 
 
 ## Open questions for Rana
 
+- **One voice everywhere** (the user's requirement, Sep 17) — proposed design in
+  `docs/agent-spec.md`, not yet agreed with Rana: the Voice Agent never speaks itself; it
+  calls a `say(text)` tool, the backend runs a deterministic safety gate on the text, then
+  voices it as Sarah with ElevenLabs Flash (`pcm_24000`, streamed) and the browser plays
+  it with `ac.playPcmResponse(res)`. `reply.audio` is ignored. Measured Sep 17: first
+  audio ~220 ms (196–319), stream ~1.7 dB quieter than the clips (`streamGainDb: 1.7`).
+  The ElevenLabs key stays on the backend. The spec also has the agent's system prompt,
+  tool schemas and a 30-question test list
 - Voice Agent API integration (adopted Sep 16): does its TTS voice match the
-  pre-rendered voice? How does agent audio reach the browser controller, so a critical
+  pre-rendered voice? (No ElevenLabs/custom voice option found in the docs — hence the
+  `say` tool design above.) How does agent audio reach the browser controller, so a critical
   line can cut the agent off mid-answer? How does our mic gate coexist with its
   barge-in / turn detection?
 

@@ -52,6 +52,9 @@ export const DEFAULTS = {
 
   streamJitterMs: 60,       // head start before a streamed reply plays, and after a network gap
   streamGate: false,        // agent replies keep the mic open, so the Voice Agent's barge-in hears the caller
+  // Live answers voiced as Sarah by ElevenLabs Flash (pcm_24000) arrive at about
+  // -15.7 LUFS against -14 for the clips (measured Sep 17): lift them to match.
+  streamGainDb: 1.7,
 
   // What the mic gate does while our own voice is audible. 'mute' is safe but deaf:
   // with silence going out, the Voice Agent can't report that the caller started
@@ -307,8 +310,9 @@ export class AudioController extends EventTarget {
     text = '',
     turnEndedAt = null,
     gate = this.opts.streamGate,
+    gainDb = 0,
   } = {}) {
-    const item = { id, priority, text, gate, turnEndedAt, stream: { chunks: [], sampleRate, ended: false, dropped: false } };
+    const item = { id, priority, text, gate, turnEndedAt, gainDb, stream: { chunks: [], sampleRate, ended: false, dropped: false } };
     this._submit(item);
     return {
       id,
@@ -318,7 +322,45 @@ export class AudioController extends EventTarget {
         this._maybeFinishStream(item);
       },
       flush: () => this._flushStream(item),
+      get dropped() {
+        return item.stream.dropped;
+      },
     };
+  }
+
+  // One voice everywhere: the agent's answer text is voiced as Sarah by ElevenLabs
+  // on the backend, which streams raw PCM16 back (output_format=pcm_24000). Pass
+  // the fetch() Response here. Chunk boundaries can split a sample, so an odd
+  // byte is carried over. If a critical line cuts the answer, the download stops.
+  async playPcmResponse(response, { sampleRate = 24000, ...opts } = {}) {
+    if (!response.ok) throw new Error(`speech stream ${response.status}`);
+    const reply = this.openStream({ sampleRate, gainDb: this.opts.streamGainDb, ...opts });
+    const reader = response.body.getReader();
+    let carry = null;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (reply.dropped) {
+          await reader.cancel();
+          return reply;
+        }
+        let bytes = value;
+        if (carry) {
+          bytes = new Uint8Array(carry.length + value.length);
+          bytes.set(carry);
+          bytes.set(value, carry.length);
+        }
+        const even = bytes.length - (bytes.length % 2);
+        if (even) reply.push(new Int16Array(bytes.slice(0, even).buffer));
+        carry = even < bytes.length ? bytes.slice(even) : null;
+      }
+      reply.end();
+    } catch (err) {
+      reply.flush();
+      throw err;
+    }
+    return reply;
   }
 
   // Cut the current line and drop everything queued. The metronome keeps going.
@@ -398,7 +440,7 @@ export class AudioController extends EventTarget {
 
     const cur = this.current;
     if (cur && this._yields(cur.item)) {
-      this._ramp(cur.gain.gain, on ? dbToGain(this.opts.yieldDuckDb) : 1,
+      this._ramp(cur.gain.gain, on ? cur.baseGain * dbToGain(this.opts.yieldDuckDb) : cur.baseGain,
         on ? this.opts.yieldAttackMs : this.opts.yieldReleaseMs);
     }
     if (!on) this._next(); // release anything held back while they were talking
@@ -474,8 +516,9 @@ export class AudioController extends EventTarget {
     this._setGate(item.gate !== false);
 
     const gain = ctx.createGain();
+    gain.gain.value = dbToGain(item.gainDb || 0);
     gain.connect(this.voiceBus);
-    const cur = { item, gain, sources: new Set(), started: false, nextAt: startAt };
+    const cur = { item, gain, baseGain: gain.gain.value, sources: new Set(), started: false, nextAt: startAt };
     this.current = cur;
 
     if (item.stream) {
