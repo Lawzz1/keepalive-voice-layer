@@ -136,6 +136,23 @@ Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from 
   zeros while our clip is audible, frames never stop
 - `clipstart` carries `latencyMs` (trigger → audible) and, for agent replies,
   `turnLatencyMs` (caller stopped talking → agent audible) for the HUD pill
+- `userSpeaking(true/false)` ← the Voice Agent's `input.speech.started` /
+  `input.speech.stopped`: the line that's playing steps back -12 dB instead of talking
+  over the caller, and queued lines wait until they stop. A **critical** alert never
+  yields (`yieldPriorities`) — agonal-breathing must be heard over a panicking rescuer
+- **Mic leak measured Sep 17** (web/leak-test.html; MacBook built-in speakers + mic, Chrome
+  152, demo volume, quiet room): noise -55.2 · app voice with echo cancellation -48.6 ·
+  without -16.4 · rescuer's shout -9.9 dBFS (p95). Echo cancellation removes 32 dB; the
+  shout is 38.7 dB above the leak; the leak is 6.6 dB above room noise. Conclusion:
+  `micGate: 'off'` is viable **together with** the backend text filter — proposed to Rana,
+  not switched yet (the gate is part of her spec, and the filter is backend work)
+- `micGate` option — **the open question for barge-in**: `'mute'` (current) sends silence
+  while our voice plays, which is safe but deaf: the Voice Agent can't report that the
+  caller started speaking, so nobody can interrupt a 6-8 s protocol line. `'attenuate'`
+  (-18 dB) lets a shout through; `'off'` relies on echo cancellation. Measure the leak on
+  the demo laptop ("Mic → STT test" on the bench) before choosing. A third option, for
+  the backend: keep the mic open and drop transcripts that match the line we are
+  speaking at that moment — we know the text and the exact timing
 
 ## Open questions for Rana
 

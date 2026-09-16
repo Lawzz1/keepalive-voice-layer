@@ -52,6 +52,20 @@ export const DEFAULTS = {
 
   streamJitterMs: 60,       // head start before a streamed reply plays, and after a network gap
   streamGate: false,        // agent replies keep the mic open, so the Voice Agent's barge-in hears the caller
+
+  // What the mic gate does while our own voice is audible. 'mute' is safe but deaf:
+  // with silence going out, the Voice Agent can't report that the caller started
+  // speaking, so nobody can barge in during a protocol line. 'attenuate' keeps a
+  // shout audible; 'off' leaves it to echo cancellation. Pick after measuring the
+  // leak on the demo laptop with the bench's "Mic → STT test".
+  micGate: 'mute',          // 'mute' | 'attenuate' | 'off'
+  micGateAttenuateDb: -18,
+
+  // The caller started talking: our line steps back instead of talking over them.
+  yieldDuckDb: -12,
+  yieldAttackMs: 60,
+  yieldReleaseMs: 200,
+  yieldPriorities: { critical: false, normal: true, response: true }, // a critical alert never steps back
 };
 
 const dbToGain = (db) => Math.pow(10, db / 20);
@@ -135,6 +149,7 @@ export class AudioController extends EventTarget {
     this._metro = null;
     this._streamSeq = 0;
     this._worklet = null;
+    this._userSpeaking = false;
 
     const Ctx = window.AudioContext || window.webkitAudioContext;
     this.ctx = new Ctx({ latencyHint: 'interactive' });
@@ -359,14 +374,42 @@ export class AudioController extends EventTarget {
   }
 
   _gateNode() {
+    const closed = () => (this.opts.micGate === 'off' ? 1
+      : this.opts.micGate === 'attenuate' ? dbToGain(this.opts.micGateAttenuateDb)
+      : 0);
     const gate = this.ctx.createGain();
-    gate.gain.value = this._gated ? 0 : 1;
+    gate.gain.value = this._gated ? closed() : 1;
     this.addEventListener('gate', (e) => {
       const t = this.ctx.currentTime;
       hold(gate.gain, t);
-      gate.gain.linearRampToValueAtTime(e.detail.gated ? 0 : 1, t + 0.01);
+      gate.gain.linearRampToValueAtTime(e.detail.gated ? closed() : 1, t + 0.01);
     });
     return gate;
+  }
+
+  // The caller is talking: call this on the Voice Agent's `input.speech.started`
+  // and `input.speech.stopped`. The line that's playing steps back instead of
+  // talking over them, and nothing new starts until they stop — except a critical
+  // alert, which is exactly the thing that must be heard over a panicking rescuer.
+  userSpeaking(on) {
+    if (this._userSpeaking === on) return;
+    this._userSpeaking = on;
+    this._emit('user', { speaking: on });
+
+    const cur = this.current;
+    if (cur && this._yields(cur.item)) {
+      this._ramp(cur.gain.gain, on ? dbToGain(this.opts.yieldDuckDb) : 1,
+        on ? this.opts.yieldAttackMs : this.opts.yieldReleaseMs);
+    }
+    if (!on) this._next(); // release anything held back while they were talking
+  }
+
+  get userIsSpeaking() {
+    return this._userSpeaking;
+  }
+
+  _yields(item) {
+    return this.opts.yieldPriorities[item.priority] !== false;
   }
 
   get gated() {
@@ -414,13 +457,15 @@ export class AudioController extends EventTarget {
 
   _next() {
     if (this.current) return;
-    const item = this.queue.shift();
-    this._emitQueue();
-    if (!item) {
+    const next = this.queue[0];
+    // Nothing to say, or the caller is talking and this line can wait.
+    if (!next || (this._userSpeaking && this._yields(next))) {
       this._release();
       this._setGate(false);
       return;
     }
+    const item = this.queue.shift();
+    this._emitQueue();
 
     const ctx = this.ctx;
     const startAt = Math.max(ctx.currentTime, this._earliestStart);

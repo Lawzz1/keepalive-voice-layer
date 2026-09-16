@@ -80,6 +80,7 @@
       <label>BPM <input id="bpm" type="number" min="100" max="120" value="110" style="width:64px"></label>
       <button id="stop">Stop voice</button>
       <button id="mic-test">Mic → STT test</button>
+      <button id="caller">Caller speaks (hold)</button>
     </div>
   </section>
 
@@ -104,6 +105,7 @@
       <button data-scenario="paramedics">Paramedics arrive<small>flush queue, final line, metronome off</small></button>
       <button data-scenario="agent">Agent reply<small>simulated Voice Agent stream: PCM16 chunks after ~0.7 s of thinking</small></button>
       <button data-scenario="agentCut">Critical cuts the agent<small>agent mid-answer, then “gasping”: the agent is cut, the alert plays</small></button>
+      <button data-scenario="callerInterrupts">Caller interrupts<small>the line steps back 12 dB while they talk, the queue waits, then resumes</small></button>
     </div>
   </section>
 
@@ -244,6 +246,15 @@ async function simulateAgentReply(clipId, thinkMs = 700) {
 }
 
 const SCENARIOS = {
+  async callerInterrupts() {
+    if (!ac.metronomeRunning) ac.startMetronome();
+    ac.play('cpr_03_position');
+    ac.play('cpr_05_recoil');   // queued: must wait until the caller stops
+    await wait(1200);
+    ac.userSpeaking(true);
+    await wait(1500);
+    ac.userSpeaking(false);
+  },
   async agent() {
     if (!ac.metronomeRunning) ac.startMetronome();
     simulateAgentReply('qa_fallback');
@@ -312,6 +323,11 @@ ac.addEventListener('metronome', ({ detail: d }) => {
   log(`<b>metro</b>  ${d.running ? `on ${d.bpm} BPM` : 'off'}`);
 });
 ac.addEventListener('state', ({ detail: d }) => log(`<b>ctx</b>    ${d.state}`));
+ac.addEventListener('user', ({ detail: d }) => log(`<b>caller</b> ${d.speaking ? 'speaking — we step back' : 'stopped'}`));
+
+const caller = $('caller');
+caller.onpointerdown = () => ac.userSpeaking(true);
+caller.onpointerup = caller.onpointerleave = () => ac.userSpeaking(false);
 
 // --- level scope ---------------------------------------------------------------
 

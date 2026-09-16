@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keep-Alive · mic leak test</title>
+<style>
+  :root { --bg: #0f1115; --panel: #171a21; --line: #262a33; --text: #e7e9ee; --muted: #8b91a0;
+          --accent: #ffb14a; --ok: #2ec28a; --warn: #ffcf6b; --bad: #ff4d4f; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 14px; }
+  h1 { font-size: 18px; margin: 0; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  ul { margin: 0; padding-left: 18px; color: var(--muted); }
+  button { font: inherit; color: var(--text); background: #20242d; border: 1px solid var(--line);
+           border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  button:hover:not(:disabled) { background: #272c37; }
+  button:disabled { opacity: .45; cursor: default; }
+  .step { display: grid; grid-template-columns: 28px 1fr auto 150px; gap: 12px; align-items: center;
+          padding: 10px 0; border-top: 1px solid var(--line); }
+  .step:first-of-type { border-top: 0; }
+  .n { width: 26px; height: 26px; border-radius: 50%; background: #20242d; display: grid; place-items: center; font-weight: 650; }
+  .step small { display: block; color: var(--muted); }
+  .val { font-family: ui-monospace, Menlo, monospace; font-size: 13px; text-align: right; color: var(--muted); }
+  .val b { color: var(--text); font-weight: 600; }
+  #status { min-height: 44px; font-size: 16px; color: var(--accent); }
+  #status .big { font-size: 28px; font-weight: 700; }
+  .meter { height: 8px; background: #0b0d11; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .05s; }
+  .verdict { font-size: 16px; font-weight: 650; }
+  .verdict.ok { color: var(--ok); } .verdict.warn { color: var(--warn); } .verdict.bad { color: var(--bad); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td { padding: 4px 0; border-bottom: 1px solid var(--line); }
+  td:last-child { text-align: right; font-family: ui-monospace, Menlo, monospace; }
+  pre { margin: 10px 0 0; background: #0b0d11; border-radius: 6px; padding: 10px; font: 12px/1.5 ui-monospace, Menlo, monospace;
+        white-space: pre-wrap; user-select: all; }
+  #unlock { position: fixed; inset: 0; background: rgba(8,10,13,.94); display: grid; place-items: center; z-index: 10; text-align: center; padding: 20px; }
+  #unlock button { font-size: 18px; padding: 16px 26px; background: #ff4d4f; border: 0; }
+  #unlock p { color: var(--muted); max-width: 420px; }
+  @media (max-width: 640px) { .step { grid-template-columns: 28px 1fr; } .step .val, .step button { grid-column: 2; text-align: left; } }
+</style>
+</head>
+<body>
+<div id="unlock">
+  <div>
+    <button id="start" disabled>Loading…</button>
+    <p id="load-msg">The page will ask for the microphone. Allow it.</p>
+  </div>
+</div>
+
+<main>
+  <h1>keep-Alive · mic leak test</h1>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Use the laptop you'll demo on: its <b>built-in speakers and mic</b>. Headphones hide the leak.</li>
+      <li>Set the volume to what you'll use in the demo.</li>
+      <li>Sit or kneel where the rescuer would be. Keep the room as it will be.</li>
+      <li>Run the steps in order. Step 4 needs your voice.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div id="status">Press "Run" on step 1.</div>
+    <div class="meter"><i id="meter"></i></div>
+  </section>
+
+  <section>
+    <h2>Steps</h2>
+    <div class="step" data-step="noise">
+      <div class="n">1</div>
+      <div>Room noise<small>Stay silent for 3 seconds.</small></div>
+      <button>Run</button><div class="val">—</div>
+    </div>
+    <div class="step" data-step="leak">
+      <div class="n">2</div>
+      <div>App voice → mic, echo cancellation on<small>KeepAlive talks over the metronome. Stay silent. This is the real app setting.</small></div>
+      <button>Run</button><div class="val">—</div>
+    </div>
+    <div class="step" data-step="raw">
+      <div class="n">3</div>
+      <div>App voice → mic, no processing<small>Same, with echo cancellation off — shows how much the browser removes.</small></div>
+      <button>Run</button><div class="val">—</div>
+    </div>
+    <div class="step" data-step="voice">
+      <div class="n">4</div>
+      <div>Your voice<small>Say loudly, as a scared rescuer would: “I heard a crack in his chest! What do I do?”</small></div>
+      <button>Run</button><div class="val">—</div>
+    </div>
+  </section>
+
+  <section id="result" hidden>
+    <h2>Result</h2>
+    <div class="verdict" id="verdict"></div>
+    <p id="advice"></p>
+    <table id="table"></table>
+    <pre id="copy"></pre>
+    <p class="val" style="text-align:left">Levels are the loud end (95th percentile) of 50 ms RMS frames, in dBFS.
+      The thresholds are engineering rules of thumb, not a guarantee of what speech recognition will do.</p>
+  </section>
+</main>
+
+<script type="module">
+import { AudioController } from './audio-controller.js';
+
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const ac = new AudioController();
+window.ac = ac;
+
+// What the real app will request, and the unprocessed reference.
+const REAL = { echoCancellation: true };
+const RAW = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+
+const STEPS = {
+  noise: { constraints: REAL, ms: 3000, prompt: 'Stay silent…' },
+  leak: { constraints: REAL, ms: 6000, play: true, prompt: 'Stay silent — KeepAlive is talking…' },
+  raw: { constraints: RAW, ms: 6000, play: true, prompt: 'Stay silent — KeepAlive is talking…' },
+  voice: { constraints: REAL, ms: 4500, prompt: 'Now: “I heard a crack in his chest! What do I do?”' },
+};
+const results = {};
+
+try {
+  await ac.load('audio/manifest.json');
+  $('start').disabled = false;
+  $('start').textContent = 'Start';
+} catch (err) {
+  $('start').textContent = 'No clips';
+  $('load-msg').textContent = err.message;
+}
+
+$('start').onclick = async () => {
+  await ac.unlock();
+  $('unlock').hidden = true;
+};
+
+for (const row of document.querySelectorAll('.step')) {
+  row.querySelector('button').onclick = () => run(row.dataset.step, row);
+}
+
+async function run(key, row) {
+  const step = STEPS[key];
+  const buttons = document.querySelectorAll('.step button');
+  buttons.forEach((b) => (b.disabled = true));
+  try {
+    for (const n of [3, 2, 1]) {
+      $('status').innerHTML = `Starting in <span class="big">${n}</span>`;
+      await sleep(700);
+    }
+    const r = await measure(step);
+    results[key] = r;
+    row.querySelector('.val').innerHTML = `<b>${r.p95.toFixed(1)}</b> dBFS`;
+    $('status').textContent = 'Done. Next step.';
+  } catch (err) {
+    $('status').textContent = `Mic error: ${err.message}`;
+  } finally {
+    buttons.forEach((b) => (b.disabled = false));
+    $('meter').style.width = '0';
+    render();
+  }
+}
+
+async function measure({ constraints, ms, play, prompt }) {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+  const src = ac.ctx.createMediaStreamSource(stream);
+  const an = ac.ctx.createAnalyser();
+  an.fftSize = 2048;
+  src.connect(an);
+  const buf = new Float32Array(an.fftSize);
+
+  if (play) {
+    ac.startMetronome();
+    ac.play('cpr_04_start_beat');
+    await sleep(1500); // let echo cancellation converge on the far-end signal
+  } else {
+    await sleep(400);
+  }
+
+  $('status').textContent = prompt;
+  const frames = [];
+  const t0 = performance.now();
+  while (performance.now() - t0 < ms) {
+    an.getFloatTimeDomainData(buf);
+    let s = 0;
+    for (const v of buf) s += v * v;
+    const db = 10 * Math.log10(s / buf.length + 1e-12);
+    frames.push(db);
+    $('meter').style.width = `${Math.max(0, Math.min(100, (db + 80) * 1.25))}%`;
+    await sleep(50);
+  }
+
+  if (play) {
+    ac.stop();
+    ac.stopMetronome();
+  }
+  src.disconnect();
+  stream.getTracks().forEach((t) => t.stop());
+
+  frames.sort((a, b) => a - b);
+  const q = (p) => frames[Math.min(frames.length - 1, Math.floor(p * frames.length))];
+  return { p50: q(0.5), p95: q(0.95) };
+}
+
+function render() {
+  const { noise, leak, raw, voice } = results;
+  if (!noise && !leak && !raw && !voice) return;
+  $('result').hidden = false;
+
+  const rows = [];
+  const f = (x) => (x == null ? '—' : `${x.toFixed(1)} dB`);
+  const snr = voice && leak ? voice.p95 - leak.p95 : null;
+  const aboveNoise = leak && noise ? leak.p95 - noise.p95 : null;
+  const aec = leak && raw ? raw.p95 - leak.p95 : null;
+  rows.push(['Room noise', noise && noise.p95]);
+  rows.push(['App voice in the mic, echo cancellation on', leak && leak.p95]);
+  rows.push(['App voice in the mic, no processing', raw && raw.p95]);
+  rows.push(['Your voice', voice && voice.p95]);
+  $('table').innerHTML =
+    rows.map(([k, v]) => `<tr><td>${k}</td><td>${v == null ? '—' : `${v.toFixed(1)} dBFS`}</td></tr>`).join('') +
+    `<tr><td><b>Your voice above the app's leak</b></td><td><b>${f(snr)}</b></td></tr>` +
+    `<tr><td>Leak above room noise</td><td>${f(aboveNoise)}</td></tr>` +
+    `<tr><td>Removed by echo cancellation</td><td>${f(aec)}</td></tr>`;
+
+  let cls = '', verdict = 'Run steps 1, 2 and 4 for a recommendation.', advice = '', mode = '?';
+  if (snr != null && aboveNoise != null) {
+    if (snr >= 20 && aboveNoise <= 6) {
+      cls = 'ok'; mode = 'off';
+      verdict = 'micGate: "off" — barge-in can work during our lines';
+      advice = 'Echo cancellation keeps the app\'s voice near the room noise, and your voice is far above it. '
+        + 'Keep the backend filter that drops transcripts matching the line being spoken, as insurance.';
+    } else if (snr >= 10) {
+      cls = 'warn'; mode = 'off + text filter';
+      verdict = 'micGate: "off", but only with the backend text filter';
+      advice = 'Your voice is clearly louder, but the app\'s voice still reaches the mic and may be transcribed. '
+        + 'The backend must drop transcripts that match the line KeepAlive is speaking at that moment.';
+    } else {
+      cls = 'bad'; mode = 'mute';
+      verdict = 'micGate: keep "mute" — the rescuer can only interrupt between lines';
+      advice = 'The app\'s voice is almost as loud in the mic as yours. Lower the demo volume or move the laptop, '
+        + 'then run steps 2 and 4 again.';
+    }
+  }
+  $('verdict').className = `verdict ${cls}`;
+  $('verdict').textContent = verdict;
+  $('advice').textContent = advice;
+
+  const r1 = (x) => (x == null ? '—' : x.toFixed(1));
+  $('copy').textContent = [
+    'keep-Alive mic leak test',
+    `browser: ${navigator.userAgent.match(/(Chrome|Firefox|Safari|OPR)\/[\d.]+/g)?.join(' ') || navigator.userAgent}`,
+    `noise ${r1(noise?.p95)} · leak AEC ${r1(leak?.p95)} · leak raw ${r1(raw?.p95)} · voice ${r1(voice?.p95)} dBFS (p95)`,
+    `voice over leak ${r1(snr)} dB · leak over noise ${r1(aboveNoise)} dB · AEC removed ${r1(aec)} dB`,
+    `recommendation: ${mode}`,
+  ].join('\n');
+}
+</script>
+</body>
+</html>
