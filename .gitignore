@@ -7,3 +7,10 @@ __pycache__/
 web/audition/
 
 # rendered clips are committed: the voice is locked (Sarah, Sep 16) and the team needs them
+
+# video draft outputs: ~70 MB, rebuilt in a minute by tools/build_video_draft.py
+# (the rendered caller/grounding lines stay committed — they cost API credits)
+video/assets/audio/stem_*.wav
+video/assets/audio/guide_mix.wav
+video/assets/*.mp3
+video/assets/*.mp4

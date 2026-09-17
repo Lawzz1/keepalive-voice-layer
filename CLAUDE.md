@@ -91,6 +91,13 @@ My scope:
 - `server/safety_gate.py` + `test_safety_gate.py` — the deterministic text gate from
   `docs/agent-spec.md` section 4 (25 tests)
 - `video/voiceover/` — demo video narration, voice Eric (`voiceover` mode)
+- `tools/build_video_draft.py` — the video draft kit, before the dashboard exists: renders
+  the caller placeholder (ElevenLabs "Liam") and the agent's grounding line, mixes the
+  2:24 soundtrack with the controller's behaviour, draws 1920x1080 cards (TO RECORD
+  placeholders where dashboard footage goes), a slideshow MP4 and `EDIT_PLAN.md`, all in
+  `video/assets/`. Big outputs are gitignored — re-run the script
+- `docs/video-shot-list.md` — what the dashboard must show in the video, for Rana and Rida
+- `tools/md_to_pdf.py` — any doc → A4 PDF for WhatsApp (`md_to_pdf.py in.md out.pdf`)
 - `.env` — `ELEVENLABS_API_KEY=...`, read by the renderer (gitignored, never commit)
 
 ## Commands

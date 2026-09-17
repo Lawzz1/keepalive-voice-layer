@@ -1,0 +1,27 @@
+{
+  "caller_01": {
+    "text": "Help! My dad just collapsed, he's not breathing!",
+    "voice": "TX3LPaxmHKxFdv7VOQHJ",
+    "model": "eleven_multilingual_v2"
+  },
+  "caller_02": {
+    "text": "He's gasping! Is he breathing again?",
+    "voice": "TX3LPaxmHKxFdv7VOQHJ",
+    "model": "eleven_multilingual_v2"
+  },
+  "caller_03": {
+    "text": "I heard a crack in his chest! Did I break his rib?",
+    "voice": "TX3LPaxmHKxFdv7VOQHJ",
+    "model": "eleven_multilingual_v2"
+  },
+  "caller_04": {
+    "text": "The paramedics are here!",
+    "voice": "TX3LPaxmHKxFdv7VOQHJ",
+    "model": "eleven_multilingual_v2"
+  },
+  "agent_grounding": {
+    "text": "The paramedics are in charge now. Take a slow, deep breath with me. You did everything you could.",
+    "voice": "EXAVITQu4vr4xnSDxMaL",
+    "model": "eleven_flash_v2_5"
+  }
+}
