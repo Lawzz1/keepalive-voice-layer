@@ -48,10 +48,11 @@ All numbers measured on a MacBook in Chrome, Sep 2026.
 | Live answer, text → Sarah audible | **294–361 ms** (ElevenLabs first audio ~220 ms) |
 | Clip loudness | -14.1 to -14.2 LUFS, -1.3 dBTP, 48 kHz mono |
 | Metronome | 3 kHz click, -3 dBFS; -7 dBFS under the voice (-4 dB duck, 40 ms / 150 ms) |
-| Mic gate while the app speaks | -58 dB, stream stays continuous |
+| Mic while the app speaks | open by default: echo cancellation + a backend echo filter, so the rescuer can interrupt; an optional gate mutes it by 58 dB |
 | Mic → Voice Agent frames | base64 PCM16 24 kHz, 20 per second, resampling checked with a 440 Hz tone |
 | App voice leaking into the mic | echo cancellation removes 32 dB; a shouting rescuer is 39 dB above the leak |
-| Safety gate | 25 tests |
+| Live answer, ElevenLabs response | median 141 ms with a pooled, pre-warmed connection (244 ms without) |
+| Safety gate and `/speak` router | 29 tests, no network needed |
 
 ## Quick start
 
@@ -120,7 +121,7 @@ stacked twice.
 | `cpr_05_recoil` | normal | Keep pushing to the beat. Allow full chest recoil… |
 | `cpr_07_aed` | normal | If anyone is with you, send them to find an AED right now… |
 | `cpr_06_paramedics` | normal | Stop compressions and step back. Let the paramedics take over… |
-| `qa_rib_pop`, `qa_bed_surface`, `qa_vomit`, `qa_fallback` | response | instant answers to the most common questions |
+| `qa_rib_pop`, `qa_bed_surface`, `qa_vomit`, `qa_tired`, `qa_fallback` | response | instant answers to the most common questions |
 
 Full text in `tools/render_directives.py`. The rhythm follows the 2025 AHA Adult
 BLS guidelines (100–120 compressions per minute); the depth line is being changed
@@ -135,8 +136,10 @@ web/audio/                   the 11 protocol clips (voice: Sarah)
 web/index.html               test bench
 web/audition.html            voice audition
 web/leak-test.html           mic leak measurement
-server/speak_server.py       reference /speak: gate → ElevenLabs → PCM stream
+server/speak_router.py       /speak as a FastAPI router: gate → ElevenLabs → PCM stream
+server/speak_server.py       local server: the bench + /speak on one origin
 server/safety_gate.py        the deterministic text gate (+ tests)
+server/INTEGRATION.md        how to include /speak in the team backend
 docs/agent-spec.md           Voice Agent prompt, tools and 30 test questions
 docs/demo-voiceover.md       demo video script
 video/voiceover/             demo narration (voice: Eric)

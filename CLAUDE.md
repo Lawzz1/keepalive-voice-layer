@@ -63,12 +63,14 @@ My scope:
 - Ducking: metronome drops **-4 dB** over 40 ms when a line starts, returns over 150 ms.
   -14 dB → -8 dB on Sep 14 (Rana's OK), -8 → -4 on Sep 16 after listening on a phone:
   the rescuer has to keep compressing *while* the voice talks, so the beat must stay
-  clearly audible. **-4 dB still needs Rana's OK.**
+  clearly audible. **Approved and locked by Rana, Sep 17.**
 - Metronome click: 3 kHz, -3 dBFS peak, 5 ms decay (Sep 16). At 1.5 kHz it sat inside the
   speech band and was masked; 3 kHz cuts through a phone speaker at a lower level
 - A limiter (DynamicsCompressor, threshold -3 dB, ratio 20) sits between the buses and the
   speaker: a -3 dBFS click plus a -1 dBTP voice would otherwise clip
-- The STT stream is gated while a directive is audible (the phone must not transcribe itself)
+- ~~The STT stream is gated while a directive is audible~~ → **since Sep 17 (Rana) the mic
+  stays open** (`micGate: 'off'`): Chrome's echo cancellation removes 32 dB and the backend
+  drops transcripts that match the line being spoken, so the rescuer can interrupt anytime
 - **Voice locked Sep 16: "Sarah — Mature, Reassuring, Confident"**, `EXAVITQu4vr4xnSDxMaL`.
   Runner-up Eric (`cjVigY5qzO86Huf0OWal`) — use him for the demo video narration, so the
   narrator doesn't sound like the app. Re-render: `render --voice-id EXAVITQu4vr4xnSDxMaL`
@@ -88,8 +90,12 @@ My scope:
   → ElevenLabs in the clips' voice (read from `web/audio/manifest.json`) → PCM16 24 kHz
   stream. Also serves `web/`. Binds to 127.0.0.1 only — the key must not be reachable from
   the network. A reference for Rana's backend, not the backend itself
-- `server/safety_gate.py` + `test_safety_gate.py` — the deterministic text gate from
-  `docs/agent-spec.md` section 4 (25 tests)
+- `server/speak_router.py` — the same `/speak` as a FastAPI router with the `SARAH` voice
+  constants: what Rana includes in `server/main.py` (`server/INTEGRATION.md`).
+  `speak_server.py` is now just the bench server around it
+- `server/safety_gate.py` + tests — the deterministic text gate from
+  `docs/agent-spec.md` section 4; `test_speak_router.py` checks the router offline and that
+  `SARAH` matches the manifest (29 tests)
 - `video/voiceover/` — demo video narration, voice Eric (`voiceover` mode)
 - `tools/build_video_draft.py` — the video draft kit, before the dashboard exists: renders
   the caller placeholder (ElevenLabs "Liam") and the agent's grounding line, mixes the
@@ -113,6 +119,9 @@ python3 -m pytest -q server                                # safety gate tests
 
 Measured Sep 17 through the bench's "Live answer" panel: click → Sarah audible in
 294–361 ms (ElevenLabs answers in 207–276 ms); a critical clip cuts a live answer.
+Sep 17, later: the speak server keeps one pooled connection to ElevenLabs warm
+(`requests.Session` + a request every 45 s, one retry on a dropped connection).
+ElevenLabs response, median of 8: 244 ms → **141 ms**. `--port` runs a second copy.
 
 ## Clip ids and priorities
 
@@ -124,10 +133,11 @@ Measured Sep 17 through the bench's "Live answer" panel: click → Sarah audible
 | cpr_04_start_beat | normal |
 | cpr_05_recoil | normal |
 | cpr_06_paramedics | normal |
-| cpr_07_aed | normal — proposed Sep 16 (AHA: get an AED early), not yet confirmed with Rana |
+| cpr_07_aed | normal — Rana, Sep 17: "AED retrieval is already in Step 1" — which text? open |
 | qa_rib_pop | response |
 | qa_bed_surface | response |
 | qa_vomit | response |
+| qa_tired | response — added Sep 17 (Rana lists "I'm tired" as a whitelisted answer) |
 | qa_fallback | response |
 
 - critical: cuts whatever is playing, plays next
@@ -164,8 +174,8 @@ Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from 
   152, demo volume, quiet room): noise -55.2 · app voice with echo cancellation -48.6 ·
   without -16.4 · rescuer's shout -9.9 dBFS (p95). Echo cancellation removes 32 dB; the
   shout is 38.7 dB above the leak; the leak is 6.6 dB above room noise. Conclusion:
-  `micGate: 'off'` is viable **together with** the backend text filter — proposed to Rana,
-  not switched yet (the gate is part of her spec, and the filter is backend work)
+  `micGate: 'off'` is viable **together with** the backend text filter — Rana built the
+  filter and the controller default is `'off'` since Sep 17
 - `micGate` option — **the open question for barge-in**: `'mute'` (current) sends silence
   while our voice plays, which is safe but deaf: the Voice Agent can't report that the
   caller started speaking, so nobody can interrupt a 6-8 s protocol line. `'attenuate'`
@@ -173,6 +183,43 @@ Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from 
   the demo laptop ("Mic → STT test" on the bench) before choosing. A third option, for
   the backend: keep the mic open and drop transcripts that match the line we are
   speaking at that moment — we know the text and the exact timing
+
+## Team progress
+
+**Sep 17, Rana — "Agent #1" status (WhatsApp group):**
+- Intent routing ~1.48 ms (p99 3.04 ms) — the router alone, not end-to-end
+- "10 life-threatening crises": cardiac arrest, arterial bleed, choking, overdose,
+  anaphylaxis, seizure, stroke, … marked complete. **Our audio covers CPR only (11 clips)
+  — every other protocol needs its own pre-recorded lines; texts not received yet**
+- Agonal-gasping override, neck-tourniquet guard (direct pressure / packing instead),
+  MARCH triage, limb + bystander detection (RIGHT_THIGH, LEFT_ARM…)
+- Multilingual: en, es, ur/hi listed — **Rana, Sep 17: the demo is English only**, the
+  multilingual part gets changed. Our English lines are enough
+- STT: **AssemblyAI Universal-3.5 Pro**, medical vocabulary boosted (answers the open
+  "which model" question). Unclear whether Agent #1 runs on the Voice Agent API or on
+  streaming STT — README / architecture card say Voice Agent API
+- "911 CAD dispatch — real GPS + street address + live mobile push alerts — Verified
+  Live". A real 911 CAD integration isn't something a hackathon can have; asked to label
+  it as simulated in the video
+- 45/45 tests passing
+- Rana, privately: liked the agent spec and the pitch line
+
+**Sep 17, Rana — locked decisions (answers to the spec review):**
+- The Voice Agent never gives medical instructions; its conversational replies are
+  muted during an active protocol. It only calls tools (`lock_protocol`,
+  `request_probe`), understands questions, and speaks after EMS arrive
+- Common crisis questions (ribs, tired, vomit…) → pre-recorded `qa_*` clips, same voice
+- Scope: cardiac arrest is the polished flagship; arterial bleeding, anaphylaxis and
+  overdose are shown as "plug-and-play extensible clinical engines"
+- 3 kHz click and -4 dB duck: approved and locked
+- Mic open during playback + backend echo filter (string similarity against the line
+  being spoken): implemented
+- 24 kHz PCM16 supported; "100% offline" claim dropped
+- The latency indicator shows their routing time (1.2–2.5 ms). Suggested: show it next
+  to the audio time (`clipstart` `latencyMs`, ~20 ms) so it isn't read as end-to-end
+- Rana asked for the `/speak` code and the gate rules to put into `server/main.py`
+- Still open: which protocols' texts to render beyond CPR, whether 911 dispatch is
+  simulated, Voice Agent API vs Universal-3.5 Pro streaming, the Step 1 AED wording
 
 ## Open questions for Rana
 

@@ -61,7 +61,10 @@ export const DEFAULTS = {
   // speaking, so nobody can barge in during a protocol line. 'attenuate' keeps a
   // shout audible; 'off' leaves it to echo cancellation. Pick after measuring the
   // leak on the demo laptop with the bench's "Mic → STT test".
-  micGate: 'mute',          // 'mute' | 'attenuate' | 'off'
+  // Sep 17: 'off', agreed with Rana. Chrome's echo cancellation removes 32 dB of our
+  // voice (leak-test.html) and the backend drops transcripts that match the line being
+  // spoken, so the rescuer can interrupt at any moment.
+  micGate: 'off',           // 'mute' | 'attenuate' | 'off'
   micGateAttenuateDb: -18,
 
   // The caller started talking: our line steps back instead of talking over them.

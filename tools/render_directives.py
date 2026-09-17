@@ -148,6 +148,14 @@ DIRECTIVES = [
                 "and immediately resume compressions.",
     },
     {
+        # AHA: swap compressors when tired, with minimal interruption. Added Sep 17 —
+        # Rana lists "I'm tired" among the whitelisted instant answers.
+        "id": "qa_tired",
+        "priority": "response",
+        "text": "If someone else can take over, switch quickly. "
+                "If you are alone, keep pushing to the beat.",
+    },
+    {
         "id": "qa_fallback",
         "priority": "response",
         "text": "Continue chest compressions to the beat. "

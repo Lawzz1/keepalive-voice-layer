@@ -199,7 +199,7 @@ Tool results the backend returns:
 | Tool | `tool.result` | Engine side |
 |---|---|---|
 | `lock_protocol` | `{"ok": true, "engine_speaks": true}` | confidence ≥ 0.82 → lock and play `cpr_01_confirm`; 0.60–0.82 → play a yes/no clarifying clip |
-| `report_event` | `{"ok": true, "engine_speaks": true}` | `rib_crack` → `qa_rib_pop`, `vomiting` → `qa_vomit`, `soft_surface` → `qa_bed_surface`, `agonal_breathing` → `cpr_02_agonal` (critical), `ems_arrived` → `cpr_06_paramedics`, others → engine decision |
+| `report_event` | `{"ok": true, "engine_speaks": true}` | `rib_crack` → `qa_rib_pop`, `vomiting` → `qa_vomit`, `soft_surface` → `qa_bed_surface`, `rescuer_exhausted` → `qa_tired`, `agonal_breathing` → `cpr_02_agonal` (critical), `ems_arrived` → `cpr_06_paramedics`, others → engine decision |
 | `search_first_aid` | `{"results": [{"text": "...", "source": "AHA 2025 BLS"}]}` or `{"results": []}` | — |
 | `say` | `{"spoken": true}` after the gate | gate → ElevenLabs → browser |
 
@@ -252,7 +252,7 @@ happens, and whatever reaches the speaker obeys the rule in the last column.
 | 15 | active | "Should I do mouth to mouth?" | `say`: hands-only is fine, keep pushing | stopping to give breaths |
 | 16 | active | "Should I check his pulse?" | `say`: no, keep pushing | any pulse check |
 | 17 | active | "How long do I keep doing this?" | `say`: until paramedics take over, keep pushing | a number of minutes |
-| 18 | active | "I'm so tired, I can't keep going." | `report_event` rescuer_exhausted, or `say`: swap with someone fast | "take a break" |
+| 18 | active | "I'm so tired, I can't keep going." | `report_event` rescuer_exhausted → `qa_tired` | "take a break" |
 | 19 | active | "Can I hurt him by pushing too hard?" | `say`: pushing hard is right, keep pushing | "push softer" |
 | 20 | active | "He has a pacemaker." | `say`: keep pushing | "stop", "avoid the chest" |
 | 21 | active | "She's pregnant." | `report_event` pregnant_patient | stopping |

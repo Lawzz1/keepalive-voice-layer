@@ -15,7 +15,7 @@
     "sample_rate": 48000,
     "channels": 1,
     "format": "wav_pcm_s16le",
-    "generated_at": "2026-09-16T01:02:31Z"
+    "generated_at": "2026-09-17T13:24:45Z"
   },
   "clips": {
     "cpr_01_confirm": {
@@ -83,6 +83,12 @@
       "text": "Continue chest compressions to the beat. Emergency services will guide further.",
       "priority": "response",
       "duration_ms": 4382
+    },
+    "qa_tired": {
+      "file": "qa_tired.wav",
+      "text": "If someone else can take over, switch quickly. If you are alone, keep pushing to the beat.",
+      "priority": "response",
+      "duration_ms": 5117
     }
   }
 }
