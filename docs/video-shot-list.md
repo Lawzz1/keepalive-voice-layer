@@ -19,23 +19,27 @@ Must be visible:
 - **Live transcript** of what the caller says, appearing as they speak
 - **● PROTOCOL LOCKED: AHA-BLS** badge the moment the emergency is recognised
 - **Red "Call 911 (Speakerphone)" button**, always on screen
-- **3D body**: hand placement highlighted while "Place the heel of one hand…"
-  plays, then **3D hands pumping on the metronome beat** from "Push hard and
-  fast…" on — the money shot, keep it large
+- **SVG anatomical manikin** (Agent #2): hand placement highlighted while "Put
+  heel of hand on center of chest…" plays, then **sternum displacement and the
+  ripple locked to every beat** from "Ready: 3… 2… 1… PUSH!" on — the money
+  shot, keep it large
 - **Critical alert callout** when the caller says "he's gasping" and the alert
   cuts in
 - **Latency pill** the whole time: `Protocol ~20 ms · Live answer ~0.3 s`, with
   live measured numbers
 - A **clock** and an **"Unedited live run"** tag in a corner
+- **"Simulated dispatch"** label wherever the 911 CAD packet, the Medic-4 ETA or
+  the map appears — the dispatch is simulated by default, and the video must say
+  so. The live relays (RAPIDSOS, Twilio, ntfy) stay switched off while filming
 
 What happens, so the screen can follow it:
 
 | ~time | Caller | App |
 |---|---|---|
 | 0:15 | "Help! My dad just collapsed, he's not breathing!" | — |
-| 0:18 | | "Call 911 now and put it on speaker!…" |
-| 0:24 | | "Place the heel of one hand…" |
-| 0:31 | | "Push hard and fast to this beat…" · metronome starts |
+| 0:18 | | "Don't panic. 911 CAD dispatch has been alerted…" |
+| 0:24 | | "Put heel of hand on center of chest…" |
+| 0:31 | | "Ready: 3… 2… 1… PUSH!…" · metronome starts |
 | 0:43 | | "Keep pushing to the beat…" |
 | 0:45 | "He's gasping! Is he breathing again?" | the line steps back while they talk |
 | 0:47 | | **alert cuts in**: "Do not stop. Gasping is agonal breathing…" |
@@ -45,6 +49,12 @@ What happens, so the screen can follow it:
 | 1:11 | | "A rib pop can happen during effective CPR…" |
 
 Real timings will differ a little. That's fine: the script has ~30 s spare.
+
+### 1b · Two-minute fatigue timer (optional, inside the run)
+
+If the take runs past two minutes, the AHA rescuer-swap prompt fires. Show the
+timer reaching 2:00 and the swap prompt on screen. **The spoken line for it is
+not recorded yet** — send me its exact text and it is rendered the same day.
 
 ### 2 · Speed and safety close-up (1:35–1:51, 16 s)
 
@@ -65,7 +75,7 @@ The audio controller already emits what the screen needs — no polling:
 
 | Screen element | Controller |
 |---|---|
-| 3D hands on the beat | `audio.beatPhase()` → `{ index, phase }`, read it every frame |
+| Manikin sternum + ripple on the beat | `audio.beatPhase()` → `{ index, phase }`, read it every frame |
 | Hand placement highlight, alert callout | `clipstart` / `clipend` events, `detail.id` (e.g. `cpr_03_position`, `cpr_02_agonal`) |
 | Captions | `clipstart` `detail.text` |
 | Latency pill | `clipstart` `detail.latencyMs` (protocol) and the live answer timing |

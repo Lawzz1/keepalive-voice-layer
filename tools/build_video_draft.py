@@ -183,7 +183,7 @@ def build_timeline():
     # 0:15 live run
     c1 = add(15.0, "caller", "caller_01", AUDIO, "placeholder voice")
     a1 = add(c1["end"] + REACT, "app", "cpr_01_confirm", CLIPS, "protocol locks")
-    a3 = add(a1["end"] + 0.25, "app", "cpr_03_position", CLIPS, "3D body: hand placement")
+    a3 = add(a1["end"] + 0.25, "app", "cpr_03_position", CLIPS, "SVG manikin: hand placement")
     a4 = add(a3["end"] + 0.25, "app", "cpr_04_start_beat", CLIPS, "metronome starts")
     beat_on = a4["t"]
     a5 = add(a4["end"] + 4.0, "app", "cpr_05_recoil", CLIPS)
@@ -325,14 +325,14 @@ def cards_html(scenes):
         "03_todo_live_run": todo("Live run — one unedited take", [
             "Caller speaks → live transcript appears",
             "● PROTOCOL LOCKED: AHA-BLS badge + red Call 911 button",
-            "3D body: hand placement, then hands pumping on the beat (110 BPM)",
+            "SVG manikin: hand placement, then sternum + ripple on the beat (110 BPM)",
             "“Gasping” → critical alert cuts in (callout)",
             "Rib question → instant answer, metronome keeps going",
             "Latency pill visible the whole time · clock + “Unedited live run” tag",
         ], *span["03_todo_live_run"]),
         "04_architecture": """<div class="wrap"><h2>AssemblyAI provides the ears. <span class="dim">A locked protocol makes the decisions.</span></h2>
             <div class="flow"><div class="box">Rescuer's voice</div><div class="arrow">→</div>
-              <div class="box">AssemblyAI<br>Voice Agent API<b>Universal-3 Pro · turn-taking · tools</b></div><div class="arrow">→</div>
+              <div class="box">AssemblyAI<br>Universal-3.5 Pro<b>streaming STT · local triage 1.4 ms</b></div><div class="arrow">→</div>
               <div class="box lock">🔒 Protocol engine<b>deterministic</b></div><div class="arrow">→</div>
               <div class="box">Pre-recorded line<b class="fast">~0.02 s</b></div></div>
             <div class="flow"><div class="box" style="visibility:hidden">Rescuer's voice</div><div class="arrow" style="visibility:hidden">→</div>
@@ -352,7 +352,7 @@ def cards_html(scenes):
         ], *span["06_todo_paramedics"]),
         "07_end": """<div class="wrap" style="text-align:center"><div class="big">KeepAlive</div>
             <div class="big dim" style="font-size:52px;margin-top:24px">When seconds count, your hands should save a life,<br>not hold a phone.</div>
-            <div class="small">Built with the AssemblyAI Voice Agent API · ElevenLabs · open source (MIT)<br>
+            <div class="small">Built with AssemblyAI streaming STT · ElevenLabs · open source (MIT)<br>
             AssemblyAI Voice Agent Hackathon · lablab.ai · Team KeepAlive</div></div>""",
     }
 

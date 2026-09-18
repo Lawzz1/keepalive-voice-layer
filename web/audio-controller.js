@@ -389,10 +389,11 @@ export class AudioController extends EventTarget {
     return out.stream;
   }
 
-  // The mic in the shape the Voice Agent API's `input.audio` wants: base64 PCM16
-  // mono, 24 kHz, one frame every frameMs. Gated like gateMic — the frames keep
+  // The mic as base64 PCM16 mono frames, one every frameMs. 16 kHz by default:
+  // that is what AssemblyAI's streaming socket (v3) takes. Pass sampleRate: 24000
+  // for the Voice Agent API's `input.audio`. Gated like gateMic — the frames keep
   // coming, as zeros while our clip is audible. Returns a stop function.
-  async micToPcm16(micStream, { sampleRate = 24000, frameMs = 50, onFrame } = {}) {
+  async micToPcm16(micStream, { sampleRate = 16000, frameMs = 50, onFrame } = {}) {
     if (!this._worklet) {
       const url = URL.createObjectURL(new Blob([PCM16_WORKLET], { type: 'text/javascript' }));
       this._worklet = this.ctx.audioWorklet.addModule(url);

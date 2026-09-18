@@ -4,9 +4,14 @@ For the backend: how the AssemblyAI Voice Agent is configured, how its answers
 reach the speaker in the same voice as the protocol lines, and how to test it
 before the demo. Paste the prompt and tools into `session.update`.
 
-Status: proposal (Sep 17). The event names come from AssemblyAI's Voice Agent
-API events reference. The exact `tools` format was not in the pages we read —
-adapt the JSON below to the documented shape.
+Status, updated Sep 18: **the pipeline is not the Voice Agent API.** Agent #1
+listens on AssemblyAI **Universal-3.5 Pro streaming** (`wss://streaming.assemblyai.com/v3/ws`,
+base64 PCM16 **16 kHz**) and the answering LLM is Groq. What still holds, and is
+what this document is for: the agent never speaks with its own TTS — it produces
+*text*, the text passes the deterministic gate in section 4, and the backend
+voices it as Sarah through `/speak` so the whole app has one voice. Sections 3
+(prompt), 4 (gate) and 8 (test questions) apply as written; sections 5–7 describe
+the Voice Agent wire format and are kept only for the case we move to it.
 
 ---
 
@@ -225,8 +230,8 @@ Keep the agent in sync with `conversation.message` (`role: "system"`):
 ```
 
 `greeting` is empty on purpose: the engine speaks first. Mic audio: the
-controller's `micToPcm16()` already produces base64 PCM16 24 kHz frames for
-`input.audio`.
+controller's `micToPcm16()` produces the frames — 16 kHz by default for the
+streaming socket, `sampleRate: 24000` for `input.audio` here.
 
 ## 8. Test before the demo — 30 questions
 

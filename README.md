@@ -19,9 +19,9 @@ the same voice after a deterministic safety check.
 ```mermaid
 flowchart LR
     R([Rescuer]) -- voice --> MIC[Mic<br/>echo cancellation]
-    MIC -- "PCM16 24 kHz<br/>micToPcm16()" --> VA[AssemblyAI<br/>Voice Agent API]
-    VA -- "lock_protocol<br/>report_event" --> ENG[Deterministic<br/>protocol engine]
-    VA -- "say(text)" --> GATE[Safety gate]
+    MIC -- "PCM16 16 kHz<br/>micToPcm16()" --> VA[AssemblyAI<br/>Universal-3.5 Pro<br/>streaming]
+    VA -- "triage: protocol locked" --> ENG[Deterministic<br/>protocol engine]
+    VA -- "question → LLM → say(text)" --> GATE[Safety gate]
     ENG -- "play(clip id)" --> AC
     GATE -- text --> TTS[ElevenLabs Flash<br/>same voice as the clips]
     TTS -- "PCM stream<br/>playPcmResponse()" --> AC[Audio controller]
@@ -30,8 +30,8 @@ flowchart LR
 ```
 
 - **AssemblyAI provides the ears, but it never makes the medical decision.** The
-  agent reports what it understood through tools; every critical instruction
-  comes from a locked protocol and a pre-recorded clip.
+  triage agent only reports what it understood; every critical instruction comes
+  from a locked protocol and a pre-recorded clip.
 - **Every word the AI says passes a deterministic check before it's spoken.**
   No doses, no "stop compressions", no pulse checks, nothing by mouth, short
   answers during CPR (`server/safety_gate.py`).
@@ -49,7 +49,7 @@ All numbers measured on a MacBook in Chrome, Sep 2026.
 | Clip loudness | -14.1 to -14.2 LUFS, -1.3 dBTP, 48 kHz mono |
 | Metronome | 3 kHz click, -3 dBFS; -7 dBFS under the voice (-4 dB duck, 40 ms / 150 ms) |
 | Mic while the app speaks | open by default: echo cancellation + a backend echo filter, so the rescuer can interrupt; an optional gate mutes it by 58 dB |
-| Mic → Voice Agent frames | base64 PCM16 24 kHz, 20 per second, resampling checked with a 440 Hz tone |
+| Mic → streaming STT frames | base64 PCM16 (16 kHz for AssemblyAI streaming, 24 kHz for the voice path), 20 per second, resampling checked with a 440 Hz tone |
 | App voice leaking into the mic | echo cancellation removes 32 dB; a shouting rescuer is 39 dB above the leak |
 | Live answer, ElevenLabs response | median 141 ms with a pooled, pre-warmed connection (244 ms without) |
 | Safety gate and `/speak` router | 29 tests, no network needed |
@@ -87,11 +87,11 @@ await audio.unlock();                        // inside the Emergency tap handler
 audio.startMetronome(110);
 
 audio.play('cpr_01_confirm');                // a pre-rendered protocol line, by id
-audio.userSpeaking(true);                    // on input.speech.started: our line steps back
-audio.userSpeaking(false);                   // on input.speech.stopped
+audio.userSpeaking(true);                    // caller started talking: our line steps back
+audio.userSpeaking(false);                   // and comes back when they stop
 
-const stop = await audio.micToPcm16(micStream, {
-  onFrame: (b64) => ws.send(JSON.stringify({ type: 'input.audio', audio: b64 })),
+const stop = await audio.micToPcm16(micStream, {   // 16 kHz PCM16 for streaming STT
+  onFrame: (b64) => ws.send(JSON.stringify({ audio_data: b64 })),
 });
 
 const res = await fetch('/speak', {
@@ -114,18 +114,20 @@ stacked twice.
 
 | id | priority | line |
 |---|---|---|
-| `cpr_01_confirm` | normal | Call 911 now and put it on speaker! Roll the patient flat on their back. Kneel beside their chest. |
+| `cpr_01_confirm` | normal | Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. We need to start CPR immediately! Lay them flat on firm ground. |
 | `cpr_02_agonal` | critical | Do not stop. Gasping is agonal breathing, not normal breathing. Kneel beside their chest immediately. |
-| `cpr_03_position` | normal | Place the heel of one hand on the center of the chest… |
-| `cpr_04_start_beat` | normal | Push hard and fast to this beat… |
+| `cpr_03_position` | normal | Put heel of hand on center of chest, lock your elbows straight. |
+| `cpr_04_start_beat` | normal | Ready: 3… 2… 1… PUSH! Push hard and fast to the beat… |
 | `cpr_05_recoil` | normal | Keep pushing to the beat. Allow full chest recoil… |
 | `cpr_07_aed` | normal | If anyone is with you, send them to find an AED right now… |
 | `cpr_06_paramedics` | normal | Stop compressions and step back. Let the paramedics take over… |
 | `qa_rib_pop`, `qa_bed_surface`, `qa_vomit`, `qa_tired`, `qa_fallback` | response | instant answers to the most common questions |
 
-Full text in `tools/render_directives.py`. The rhythm follows the 2025 AHA Adult
-BLS guidelines (100–120 compressions per minute); the depth line is being changed
-to their "at least 2 inches" wording.
+Full text in `tools/render_directives.py`. The lines are rendered word for word
+from the protocol engine's own wording, so the backend's echo filter can match
+them. The rhythm follows the 2025 AHA Adult BLS guidelines (100–120 compressions
+per minute); the depth wording ("two inches" vs the AHA's "at least two inches")
+is still with the protocol owner.
 
 ## Layout
 
@@ -140,7 +142,7 @@ server/speak_router.py       /speak as a FastAPI router: gate → ElevenLabs →
 server/speak_server.py       local server: the bench + /speak on one origin
 server/safety_gate.py        the deterministic text gate (+ tests)
 server/INTEGRATION.md        how to include /speak in the team backend
-docs/agent-spec.md           Voice Agent prompt, tools and 30 test questions
+docs/agent-spec.md           agent prompt, the say() tool, the gate and 30 test questions
 docs/demo-voiceover.md       demo video script
 video/voiceover/             demo narration (voice: Eric)
 ```

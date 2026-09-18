@@ -15,14 +15,14 @@
     "sample_rate": 48000,
     "channels": 1,
     "format": "wav_pcm_s16le",
-    "generated_at": "2026-09-17T13:24:45Z"
+    "generated_at": "2026-09-18T18:06:11Z"
   },
   "clips": {
     "cpr_01_confirm": {
       "file": "cpr_01_confirm.wav",
-      "text": "Call 911 now and put it on speaker! Roll the patient flat on their back. Kneel beside their chest.",
+      "text": "Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. We need to start CPR immediately! Lay them flat on firm ground.",
       "priority": "normal",
-      "duration_ms": 5819
+      "duration_ms": 9808
     },
     "cpr_02_agonal": {
       "file": "cpr_02_agonal.wav",
@@ -32,15 +32,15 @@
     },
     "cpr_03_position": {
       "file": "cpr_03_position.wav",
-      "text": "Place the heel of one hand on the center of the chest. Interlock your other hand on top. Lock your elbows straight.",
+      "text": "Put heel of hand on center of chest, lock your elbows straight.",
       "priority": "normal",
-      "duration_ms": 6567
+      "duration_ms": 3207
     },
     "cpr_04_start_beat": {
       "file": "cpr_04_start_beat.wav",
-      "text": "Push hard and fast to this beat. Push down two inches, then let the chest come all the way up. One, two, three, four.",
+      "text": "Ready: 3... 2... 1... PUSH! Push hard and fast to the beat! Push down two inches, let the chest rise fully every time.",
       "priority": "normal",
-      "duration_ms": 8297
+      "duration_ms": 9044
     },
     "cpr_05_recoil": {
       "file": "cpr_05_recoil.wav",

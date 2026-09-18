@@ -221,6 +221,47 @@ Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from 
 - Still open: which protocols' texts to render beyond CPR, whether 911 dispatch is
   simulated, Voice Agent API vs Universal-3.5 Pro streaming, the Step 1 AED wording
 
+**Sep 18, Rana — the real architecture (three agents) and the open answers:**
+- **Not the Voice Agent API.** Agent #1 runs on **AssemblyAI Universal-3.5 Pro streaming**
+  (`wss://streaming.assemblyai.com/v3/ws`) with local triage (inverted keyword index +
+  regex, MARCH, agonal detector), 1.44 ms average. README and the architecture card had
+  to be corrected. **Mic frames for that socket are 16 kHz**, not 24 kHz: pass
+  `sampleRate: 16000` to `micToPcm16` (our `/speak` output stays 24 kHz)
+- **Agent #2 "Safety Coach"** is our audio layer + an SVG anatomical manikin (not the 3D
+  body from the master plan): sternum displacement and a ripple locked to each beat, plus
+  an AHA 2-minute fatigue timer that prompts a rescuer swap — **that timer line has no
+  clip yet**
+- **Agent #3 "Clinical Companion"**: Groq LPU (qwen) at 180–290 ms + our `/speak`, with
+  the section-4 gate and the deterministic micro-Q&A as offline fallback
+- **911 dispatch is simulated by default** (ECHO packet, Medic-4, 4 min ETA, live
+  reverse-geocoded GPS, real nearby AED data); optional live relays (RAPIDSOS, Twilio,
+  ntfy) behind `.env`. Video needs a "simulated dispatch" label, and the live relays must
+  stay off during the demo
+- **Exact engine wording** for steps 1–3 received; AED is *not* in step 1. Our clips are
+  re-rendered to match word for word, because the echo filter compares texts
+- Latency pill: "routing 1.5 ms · voice 20 ms" — as suggested
+- `report_event rescuer_exhausted` → `qa_tired`, with the companion as fallback
+
+## Road to submission (plan as of Sep 17)
+
+Deadline Sep 30, 17:00 CEST — submit on Sep 28–29.
+
+1. **Sep 17–20, after Rana's answers:** re-render Step 1 if the AED goes into it; align the
+   architecture card + README (Voice Agent API vs Universal-3.5 Pro); "simulated
+   dispatch" label if 911 is simulated; help wire `/speak` into `server/main.py`
+2. **Sep 21–24, with the dashboard:** wire the controller in — backend events →
+   `play(id)`, speech start/stop → `userSpeaking()`, live answers →
+   `playPcmResponse()`, 3D hands → `beatPhase()`; end-to-end run; HUD latency pill with
+   live numbers
+3. **Sep 25–27, filming:** leak test in the recording room; the opening shot of a real
+   person on the floor; the live run in one take, twice (a teammate as the caller);
+   close-ups (latency pill, timeline, EMS card). Dashboard footage due **Sep 27**
+4. **Sep 27–29, edit + submit:** edit per `video/assets/EDIT_PLAN.md`; lablab materials
+   (title, description, cover, video link, public MIT repo — the audio layer has to go
+   into Rana's repo, ideally a live demo link); submit; ask friends to vote
+
+Biggest risk: the dashboard + 3D landing late. Also needed: access to Rana's repo.
+
 ## Open questions for Rana
 
 - **One voice everywhere** (the user's requirement, Sep 17) — proposed design in

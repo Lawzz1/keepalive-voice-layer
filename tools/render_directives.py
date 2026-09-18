@@ -88,9 +88,10 @@ DIRECTIVES = [
     {
         "id": "cpr_01_confirm",
         "priority": "normal",
-        # AHA: call emergency services first. Wording from Rana, Sep 16.
-        "text": "Call 911 now and put it on speaker! Roll the patient flat on their back. "
-                "Kneel beside their chest.",
+        # Word for word from Rana's engine (Sep 18). The clips must match the engine
+        # exactly: the backend's echo filter compares transcripts against these texts.
+        "text": "Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. "
+                "We need to start CPR immediately! Lay them flat on firm ground.",
     },
     {
         "id": "cpr_02_agonal",
@@ -101,14 +102,16 @@ DIRECTIVES = [
     {
         "id": "cpr_03_position",
         "priority": "normal",
-        "text": "Place the heel of one hand on the center of the chest. "
-                "Interlock your other hand on top. Lock your elbows straight.",
+        # Rana's engine wording, Sep 18
+        "text": "Put heel of hand on center of chest, lock your elbows straight.",
     },
     {
         "id": "cpr_04_start_beat",
         "priority": "normal",
-        "text": "Push hard and fast to this beat. Push down two inches, "
-                "then let the chest come all the way up. One, two, three, four.",
+        # Rana's engine wording, Sep 18. "two inches" — AHA says *at least* two inches;
+        # raised with Rana, not changed unilaterally.
+        "text": "Ready: 3... 2... 1... PUSH! Push hard and fast to the beat! "
+                "Push down two inches, let the chest rise fully every time.",
     },
     {
         "id": "cpr_05_recoil",
