@@ -103,6 +103,9 @@ My scope:
   placeholders where dashboard footage goes), a slideshow MP4 and `EDIT_PLAN.md`, all in
   `video/assets/`. Big outputs are gitignored — re-run the script
 - `docs/video-shot-list.md` — what the dashboard must show in the video, for Rana and Rida
+- `tools/line_audit.py` — takes Rana's screen recording (or a transcript), transcribes it
+  and says which clips still match his engine word for word, which drifted, and which
+  lines he speaks that have no clip. Prints the `render --only` command
 - `tools/md_to_pdf.py` — any doc → A4 PDF for WhatsApp (`md_to_pdf.py in.md out.pdf`)
 - `.env` — `ELEVENLABS_API_KEY=...`, read by the renderer (gitignored, never commit)
 
