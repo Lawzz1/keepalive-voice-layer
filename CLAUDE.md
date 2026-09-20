@@ -245,6 +245,36 @@ Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from 
 - Latency pill: "routing 1.5 ms · voice 20 ms" — as suggested
 - `report_event rescuer_exhausted` → `qa_tired`, with the companion as fallback
 
+**Sep 21, the live app** — https://keepalive-dpt7.onrender.com (Render), repo
+`ranazain9/keepalive` now **public with an MIT LICENSE**, README says "simulated CAD
+dispatch". A React cockpit (`client/src`) replaced `client_test.html`: three themes, a
+Three.js scene after all (`client/public/models/*.glb`), a 2.2" depth gauge, a 110 BPM
+ring, an EMS handoff modal, and a "70s Video Take Helper" that replays my shot list
+through `simulateVoice()` — REST, not the mic, so the film take must use the real mic path.
+- **Both clients speak through `window.speechSynthesis`** (`client/src/hooks/useRescueState.js`,
+  `EMSHandoverModal.jsx`): the browser's robot voice, different on every machine. Our clips
+  are not wired in. This is the biggest quality gap for the video
+- Their metronome is `setInterval` + a per-click oscillator. **Measured on the live page
+  with both WebGL canvases rendering: 110.09 BPM, worst single-beat error 2.9 ms** — good
+  enough; no reason to push our scheduler on timing grounds alone
+- Mic path is correct: downsample to 16 kHz PCM16, plus a word-overlap echo filter
+- Visible typo in the HUD: `LATITUDE: 0.8MS` (`client/src/components/TopTelemetryBar.jsx:55`)
+  — it means latency, and it will be on screen in the video
+- Still open from my README review: `py -3.13` in the quickstart (Windows only),
+  `.env.example` missing `GROQ_API_KEY`/`CAD_PROVIDER`, "100% Offline Capable" for Agent #1,
+  and the UI itself never says the dispatch is simulated
+- Spoken vs on-screen text differ in step 3: `instruction` says "at least 2 inches",
+  `spoken_voice_text` says "two inches"
+
+**Sep 21, the whole engine is rendered in Sarah's voice.** `tools/sync_engine_lines.py`
+parses his `protocols.py` (`audio_cue_id` + `spoken_voice_text`) and
+`micro_qa_engine.py` into `tools/engine_lines.py`, which `render_directives.py` merges
+into `DIRECTIVES`. **46 engine lines + our original 12 = 58 clips**, all -14 LUFS / -1.3 dBTP,
+keyed by *his* ids, so the backend can ask for a clip by the name it already uses:
+21 protocol directives (adult/child/infant CPR, choking ×3, bleed, anaphylaxis, overdose)
+and 26 micro-Q&A answers. Number-heavy lines verified by transcribing them back.
+Re-run the sync after he edits a line: it prints exactly what drifted.
+
 ## Road to submission (plan as of Sep 17)
 
 Deadline Sep 30, 17:00 CEST — submit on Sep 28–29.

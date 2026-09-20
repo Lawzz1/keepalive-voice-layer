@@ -15,7 +15,7 @@
     "sample_rate": 48000,
     "channels": 1,
     "format": "wav_pcm_s16le",
-    "generated_at": "2026-09-18T18:06:11Z"
+    "generated_at": "2026-09-20T22:14:29Z"
   },
   "clips": {
     "cpr_01_confirm": {
@@ -89,6 +89,282 @@
       "text": "If someone else can take over, switch quickly. If you are alone, keep pushing to the beat.",
       "priority": "response",
       "duration_ms": 5117
+    },
+    "qa_pressing_force": {
+      "file": "qa_pressing_force.wav",
+      "text": "Pushing at least two inches deep is necessary to pump blood. Keep pushing hard.",
+      "priority": "response",
+      "duration_ms": 4526
+    },
+    "bleed_step1_pressure": {
+      "file": "bleed_step1_pressure.wav",
+      "text": "Call 911 on speaker! Apply heavy direct pressure on the wound now.",
+      "priority": "normal",
+      "duration_ms": 3603
+    },
+    "bleed_step2_tourniquet": {
+      "file": "bleed_step2_tourniquet.wav",
+      "text": "Apply tourniquet two to three inches above wound, tighten until bleeding stops.",
+      "priority": "normal",
+      "duration_ms": 4579
+    },
+    "anaph_step1_epipen": {
+      "file": "anaph_step1_epipen.wav",
+      "text": "Call 911 now! Locate the EpiPen immediately.",
+      "priority": "normal",
+      "duration_ms": 2635
+    },
+    "cpr_adult_step1_call911": {
+      "file": "cpr_adult_step1_call911.wav",
+      "text": "Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. We need to start CPR immediately! Lay them flat on firm ground.",
+      "priority": "normal",
+      "duration_ms": 9814
+    },
+    "cpr_adult_step2_posture": {
+      "file": "cpr_adult_step2_posture.wav",
+      "text": "Put heel of hand on center of chest, lock your elbows straight.",
+      "priority": "normal",
+      "duration_ms": 3044
+    },
+    "cpr_adult_step3_compressions": {
+      "file": "cpr_adult_step3_compressions.wav",
+      "text": "Ready: 3... 2... 1... PUSH! Push hard and fast to the beat! Push down two inches, let the chest rise fully every time.",
+      "priority": "normal",
+      "duration_ms": 9606
+    },
+    "cpr_child_step1_call911": {
+      "file": "cpr_child_step1_call911.wav",
+      "text": "Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. We need to start CPR immediately! Lay them flat on firm ground.",
+      "priority": "normal",
+      "duration_ms": 10469
+    },
+    "cpr_child_step2_posture": {
+      "file": "cpr_child_step2_posture.wav",
+      "text": "Use one or two hands on center of chest, lock elbows straight.",
+      "priority": "normal",
+      "duration_ms": 3576
+    },
+    "qa_ambulance_dispatch_status": {
+      "file": "qa_ambulance_dispatch_status.wav",
+      "text": "911 CAD dispatch has been alerted with your exact GPS location. Keep pushing hard.",
+      "priority": "response",
+      "duration_ms": 5033
+    },
+    "cpr_child_step3_compressions": {
+      "file": "cpr_child_step3_compressions.wav",
+      "text": "Compress to the beat! 30 compressions followed by 2 gentle breaths.",
+      "priority": "normal",
+      "duration_ms": 4112
+    },
+    "cpr_infant_step1_call911": {
+      "file": "cpr_infant_step1_call911.wav",
+      "text": "Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. We need to start CPR immediately! Place infant on a flat surface.",
+      "priority": "normal",
+      "duration_ms": 10461
+    },
+    "cpr_infant_step2_posture": {
+      "file": "cpr_infant_step2_posture.wav",
+      "text": "Place infant on flat surface. Use two fingers in center of chest.",
+      "priority": "normal",
+      "duration_ms": 3859
+    },
+    "cpr_infant_step3_compressions": {
+      "file": "cpr_infant_step3_compressions.wav",
+      "text": "Compress gently 1.5 inches deep at 110 BPM. 30 compressions then 2 gentle puffs.",
+      "priority": "normal",
+      "duration_ms": 6679
+    },
+    "choke_adult_step1_assess": {
+      "file": "choke_adult_step1_assess.wav",
+      "text": "Call 911 immediately! Ask: Are you choking? Can you speak?",
+      "priority": "normal",
+      "duration_ms": 3934
+    },
+    "choke_adult_step2_heimlich": {
+      "file": "choke_adult_step2_heimlich.wav",
+      "text": "Stand behind them. Make a fist above navel, pull sharply inward and upward.",
+      "priority": "normal",
+      "duration_ms": 4638
+    },
+    "choke_child_step1_assess": {
+      "file": "choke_child_step1_assess.wav",
+      "text": "Call 911 immediately on speaker! Kneel behind child, encourage them to cough.",
+      "priority": "normal",
+      "duration_ms": 4998
+    },
+    "choke_child_step2_thrusts": {
+      "file": "choke_child_step2_thrusts.wav",
+      "text": "Kneel behind child. Make a fist above navel, give quick upward thrusts.",
+      "priority": "normal",
+      "duration_ms": 5062
+    },
+    "choke_infant_step1_call911": {
+      "file": "choke_infant_step1_call911.wav",
+      "text": "Call 911 on speaker! Never do a blind finger sweep.",
+      "priority": "normal",
+      "duration_ms": 2801
+    },
+    "choke_infant_step2_slaps": {
+      "file": "choke_infant_step2_slaps.wav",
+      "text": "Lay infant face down along forearm. Give 5 firm back slaps, then turn over for 5 chest thrusts.",
+      "priority": "normal",
+      "duration_ms": 6718
+    },
+    "anaph_step2_inject": {
+      "file": "anaph_step2_inject.wav",
+      "text": "Inject into outer mid-thigh, push until it clicks, hold for three full seconds.",
+      "priority": "normal",
+      "duration_ms": 4817
+    },
+    "od_step1_narcan": {
+      "file": "od_step1_narcan.wav",
+      "text": "Call 911 on speaker! Grab Narcan or Naloxone nasal spray.",
+      "priority": "normal",
+      "duration_ms": 3845
+    },
+    "od_step2_administer": {
+      "file": "od_step2_administer.wav",
+      "text": "Spray full dose into one nostril. Place in recovery position.",
+      "priority": "normal",
+      "duration_ms": 3378
+    },
+    "qa_agent_identity": {
+      "file": "qa_agent_identity.wav",
+      "text": "I am Agent 3, right here with you. Tell me what is happening or ask anything.",
+      "priority": "response",
+      "duration_ms": 4558
+    },
+    "qa_help_general": {
+      "file": "qa_help_general.wav",
+      "text": "I am right here with you. Tell me what happened\u2014are they awake and breathing?",
+      "priority": "response",
+      "duration_ms": 4531
+    },
+    "qa_good_samaritan_legal": {
+      "file": "qa_good_samaritan_legal.wav",
+      "text": "Good Samaritan laws protect you. You are legally protected when attempting emergency CPR.",
+      "priority": "response",
+      "duration_ms": 4973
+    },
+    "qa_rib_cracking": {
+      "file": "qa_rib_cracking.wav",
+      "text": "A rib pop can happen during effective CPR. Do not stop. Keep pushing to the beat.",
+      "priority": "response",
+      "duration_ms": 4988
+    },
+    "qa_technique_verification": {
+      "file": "qa_technique_verification.wav",
+      "text": "You are doing great. Keep hands centered, elbows locked, and push to the beat.",
+      "priority": "response",
+      "duration_ms": 4474
+    },
+    "qa_what_to_do_next": {
+      "file": "qa_what_to_do_next.wav",
+      "text": "Keep doing chest compressions in center of chest. Focus on the 110 beat.",
+      "priority": "response",
+      "duration_ms": 4430
+    },
+    "qa_confusion_guidance": {
+      "file": "qa_confusion_guidance.wav",
+      "text": "Stay calm, I am guiding you. Hands in center of chest, lock elbows, and push to the beat.",
+      "priority": "response",
+      "duration_ms": 4821
+    },
+    "qa_patient_alive_doubt": {
+      "file": "qa_patient_alive_doubt.wav",
+      "text": "Do not give up. Compressions are pumping oxygen to their brain right now. Keep pushing.",
+      "priority": "response",
+      "duration_ms": 4541
+    },
+    "qa_blood_fluid": {
+      "file": "qa_blood_fluid.wav",
+      "text": "Wipe blood quickly from mouth, then continue chest compressions immediately without stopping.",
+      "priority": "response",
+      "duration_ms": 4662
+    },
+    "qa_hand_placement": {
+      "file": "qa_hand_placement.wav",
+      "text": "Heel of your hand right in center of chest between nipples. Lock elbows straight.",
+      "priority": "response",
+      "duration_ms": 4574
+    },
+    "qa_mouth_to_mouth": {
+      "file": "qa_mouth_to_mouth.wav",
+      "text": "Hands-only CPR is just as effective for adults. Keep pushing continuously to the beat.",
+      "priority": "response",
+      "duration_ms": 5168
+    },
+    "qa_exhaustion_stopping": {
+      "file": "qa_exhaustion_stopping.wav",
+      "text": "Do not stop compressions. If another person is with you, swap rescuers without pausing.",
+      "priority": "response",
+      "duration_ms": 4976
+    },
+    "qa_vomit_airway": {
+      "file": "qa_vomit_airway.wav",
+      "text": "Roll them onto their side quickly to clear mouth, then return to back immediately.",
+      "priority": "response",
+      "duration_ms": 4494
+    },
+    "qa_aed_wet_surface": {
+      "file": "qa_aed_wet_surface.wav",
+      "text": "Dry victim chest with a towel or shirt before applying AED pads. It is safe.",
+      "priority": "response",
+      "duration_ms": 5156
+    },
+    "qa_aed_pacemaker": {
+      "file": "qa_aed_pacemaker.wav",
+      "text": "Place AED pad at least one inch away from visible pacemaker lump. Continue CPR.",
+      "priority": "response",
+      "duration_ms": 5285
+    },
+    "qa_checking_pulse": {
+      "file": "qa_checking_pulse.wav",
+      "text": "Do not waste time checking pulse. If unresponsive and not breathing, continue CPR immediately.",
+      "priority": "response",
+      "duration_ms": 5725
+    },
+    "qa_tourniquet_pain": {
+      "file": "qa_tourniquet_pain.wav",
+      "text": "Tourniquets must hurt to work. Tighten until bright red spurting bleeding stops completely.",
+      "priority": "response",
+      "duration_ms": 5201
+    },
+    "qa_expose_bare_chest": {
+      "file": "qa_expose_bare_chest.wav",
+      "text": "Expose the bare chest immediately so you can see where to place your hands.",
+      "priority": "response",
+      "duration_ms": 4003
+    },
+    "qa_untrained_novice": {
+      "file": "qa_untrained_novice.wav",
+      "text": "Don't panic, I will guide you. Heel on center of chest, lock elbows, and push to the beat.",
+      "priority": "response",
+      "duration_ms": 4698
+    },
+    "qa_too_late_doubt": {
+      "file": "qa_too_late_doubt.wav",
+      "text": "Start compressions immediately. It is never too late to try to save their life.",
+      "priority": "response",
+      "duration_ms": 4355
+    },
+    "qa_patient_moan_sound": {
+      "file": "qa_patient_moan_sound.wav",
+      "text": "Do not stop unless they push your hands away and breathe normally. Keep pushing.",
+      "priority": "response",
+      "duration_ms": 4783
+    },
+    "qa_agonal_breathing_sound": {
+      "file": "qa_agonal_breathing_sound.wav",
+      "text": "Do not stop. Gasping is agonal breathing, not normal breathing. Keep pushing to the beat.",
+      "priority": "response",
+      "duration_ms": 5144
+    },
+    "qa_paramedic_arrival_debrief": {
+      "file": "qa_paramedic_arrival_debrief.wav",
+      "text": "The paramedics are in charge now. Step back and take a deep breath. You did everything right.",
+      "priority": "response",
+      "duration_ms": 4503
     }
   }
 }
