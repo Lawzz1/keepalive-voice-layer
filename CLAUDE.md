@@ -275,6 +275,28 @@ keyed by *his* ids, so the backend can ask for a clip by the name it already use
 and 26 micro-Q&A answers. Number-heavy lines verified by transcribing them back.
 Re-run the sync after he edits a line: it prints exactly what drifted.
 
+**Sep 22 — two PRs open in Rana's repo** (push access granted Sep 20):
+- **#1 `feat/human-voice-clips`** — 58 clips (3.0 MB Opus) in `client/public/audio`,
+  `client/src/audio/clipVoice.js` (lookup by the backend's own `asset_id`, else exact text),
+  the hook tries a clip first, browser speech stays as the fallback, `main.py` mounts
+  `/audio`. Verified against their server: steps 1–3 and the paramedic line play from clips
+- **#2 `feat/live-answers-same-voice`** (stacked on #1) — `/speak` + the safety gate inside
+  their backend, so Groq's unscripted answers are voiced as Sarah. Order: clip → /speak →
+  browser. No key → router not mounted → 404 → client stops asking → today's behaviour.
+  Measured in their backend: upstream 125 ms, first sound 139 ms
+- Two real bugs found by testing: the client always sent `protocol_state: 'active'`, so the
+  gate cut the paramedic line as `too_long`; and a PCM chunk at an odd byte offset made
+  `Int16Array` throw and abandoned the stream mid-answer. Both fixed in #2
+- Their `unittest discover -s server/tests` stays 60/60; our 29 pytest tests live in
+  `server/tests_voice`
+- **`net::ERR_ABORTED` on a streamed `/speak` response is a devtools artefact**, not a
+  failure — a direct call that demonstrably played audio is logged the same way
+- **ntfy.sh fires by default**: `NTFY_TOPIC` has a hardcoded value in their `config.py`, so a
+  real push goes out even with `CAD_PROVIDER=MOCK`. Flagged in #2 — must be off while filming
+- Rana chose browser `speechSynthesis` over our voice on Sep 21 ("no paid ElevenLabs tier");
+  the user offered a dedicated TTS-only key from his own account, to live only in Render's
+  env vars and be rotated after Sep 30
+
 ## Road to submission (plan as of Sep 17)
 
 Deadline Sep 30, 17:00 CEST — submit on Sep 28–29.
