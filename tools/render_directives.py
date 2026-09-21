@@ -209,8 +209,10 @@ VOICEOVER = [
     },
     {
         "id": "vo_04_hybrid",
-        "text": "Protocol lines play in milliseconds. Questions nobody scripted go to "
-                "Assembly A.I.'s Voice Agent API, which answers in about a second. "
+        # Corrected Sep 22: the pipeline is AssemblyAI streaming STT + a Groq LLM,
+        # not the Voice Agent API. Both numbers are measured, not estimated.
+        "text": "Assembly A.I. hears every word in real time. Protocol lines answer in "
+                "twenty milliseconds, live questions in under half a second. "
                 "And the metronome never stops.",
     },
     {

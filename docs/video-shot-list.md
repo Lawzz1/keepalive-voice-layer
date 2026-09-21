@@ -19,17 +19,18 @@ Must be visible:
 - **Live transcript** of what the caller says, appearing as they speak
 - **● PROTOCOL LOCKED: AHA-BLS** badge the moment the emergency is recognised
 - **Red "Call 911 (Speakerphone)" button**, always on screen
-- **SVG anatomical manikin** (Agent #2): hand placement highlighted while "Put
-  heel of hand on center of chest…" plays, then **sternum displacement and the
-  ripple locked to every beat** from "Ready: 3… 2… 1… PUSH!" on — the money
-  shot, keep it large
+- **The pacing panel** (Agent #2): the clinical feed while "Put heel of hand on
+  center of chest…" plays, then **the 110 BPM ring pulsing on the beat** and the
+  depth gauge from "Ready: 3… 2… 1… PUSH!" on — the money shot, keep it large.
+  (The 3D models were removed on Sep 21 over asset licensing; do not plan a shot
+  around them)
 - **Critical alert callout** when the caller says "he's gasping" and the alert
   cuts in
 - **Latency pill** the whole time: `Protocol ~20 ms · Live answer ~0.3 s`, with
   live measured numbers
 - A **clock** and an **"Unedited live run"** tag in a corner
-- **"Simulated dispatch"** label wherever the 911 CAD packet, the Medic-4 ETA or
-  the map appears — the dispatch is simulated by default, and the video must say
+- The **"SIMULATED 911 CAD"** label (already in the UI since Sep 21) must stay
+  visible wherever the CAD packet, the Medic-4 ETA or the map appears — the dispatch is simulated by default, and the video must say
   so. The live relays (RAPIDSOS, Twilio, ntfy) stay switched off while filming
 
 What happens, so the screen can follow it:
@@ -75,7 +76,7 @@ The audio controller already emits what the screen needs — no polling:
 
 | Screen element | Controller |
 |---|---|
-| Manikin sternum + ripple on the beat | `audio.beatPhase()` → `{ index, phase }`, read it every frame |
+| BPM ring pulsing on the beat | the metronome hook's `beatPhase`, or `audio.beatPhase()` if the audio module drives it |
 | Hand placement highlight, alert callout | `clipstart` / `clipend` events, `detail.id` (e.g. `cpr_03_position`, `cpr_02_agonal`) |
 | Captions | `clipstart` `detail.text` |
 | Latency pill | `clipstart` `detail.latencyMs` (protocol) and the live answer timing |

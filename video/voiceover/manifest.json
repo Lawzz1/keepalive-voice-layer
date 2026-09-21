@@ -15,7 +15,7 @@
     "sample_rate": 48000,
     "channels": 1,
     "format": "wav_pcm_s16le",
-    "generated_at": "2026-09-16T22:49:09Z"
+    "generated_at": "2026-09-21T22:47:11Z"
   },
   "clips": {
     "vo_01_hook": {
@@ -38,9 +38,9 @@
     },
     "vo_04_hybrid": {
       "file": "vo_04_hybrid.wav",
-      "text": "Protocol lines play in milliseconds. Questions nobody scripted go to Assembly A.I.'s Voice Agent API, which answers in about a second. And the metronome never stops.",
+      "text": "Assembly A.I. hears every word in real time. Protocol lines answer in twenty milliseconds, live questions in under half a second. And the metronome never stops.",
       "priority": "narration",
-      "duration_ms": 9783
+      "duration_ms": 9812
     },
     "vo_05_close": {
       "file": "vo_05_close.wav",

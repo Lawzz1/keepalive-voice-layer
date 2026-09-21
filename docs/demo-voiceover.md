@@ -12,7 +12,7 @@ draft 1: the 911 line, the live latency pill, the unedited live run.
 - **Narration is sparse.** The caller and the app carry the story; the narrator
   only opens, explains the architecture, and closes. The narrator's voice is not
   the app's voice.
-- **Zoom in.** Record at 1080p and punch in on the 3D body, the HUD and the pill:
+- **Zoom in.** Record at 1080p and punch in on the pacing panel, the BPM ring, the depth gauge and the latency pill:
   small UI on a big dark screen is unreadable (KiaOra's and Siberia's problem).
 - `[brackets]` = not decided yet.
 
@@ -34,20 +34,21 @@ kitchen `[needs filming: who, where]`.
 |---|---|---|---|
 | 0:15 | "Help! He collapsed, he's not breathing!" | — | live transcript |
 | 0:18 | | `cpr_01_confirm` — "Call 911 now and put it on speaker! Roll the patient flat on their back. Kneel beside their chest." | **● PROTOCOL LOCKED: AHA-BLS**, red **Call 911** button, latency pill "Protocol: ~20 ms" |
-| 0:26 | | `cpr_03_position` — hand placement | 3D body: sternum crosshair, interlocked hands |
-| 0:35 | | `cpr_04_start_beat` — metronome starts | **the money shot:** 3D hands pumping at 110 BPM, orbit 360° |
+| 0:26 | | `cpr_adult_step2_posture` — hand placement | clinical pacing feed, sternum target |
+| 0:35 | | `cpr_adult_step3_compressions` — metronome starts | **the money shot:** the 110 BPM ring pulsing with the clicks, depth gauge at 2.0" |
 | 0:46 | "He's gasping, is he breathing again?" | `cpr_02_agonal` **cuts in** mid-line | callout `critical → cuts in`; the cut line replays after |
 | 0:55 | | `cpr_07_aed` — send someone for an AED `[if the line is approved]` | |
 | 1:10 | "I heard a bone pop — did I break his rib?!" | answer over the ducked beat, metronome never stops `[pre-recorded qa_rib_pop or live agent — pending Rana]` | latency pill shows both numbers |
 
-If the run overruns, trim pauses between lines; don't drop the 3D shot or the
+If the run overruns, trim pauses between lines; don't drop the pacing shot or the
 agonal cut-in — those are the two moments nobody else has.
 
 ## 1:25–1:35 · Architecture — 8 seconds
 
-**On screen:** Speech → AssemblyAI Voice Agent API → deterministic protocol engine
-→ audio cache + 3D cockpit. A lock icon: **LLM ≠ medical decision**. The latency
-pill: `Protocol: ~20 ms · Live agent: ~1.0 s`.
+**On screen:** Speech → AssemblyAI Universal-3.5 Pro streaming → deterministic
+protocol engine → recorded voice + cockpit; the unscripted question branches off
+to Groq. A lock icon: **LLM ≠ medical decision**. The latency pill:
+`routing 0.5 ms · voice 20 ms · companion 0.38 s`.
 
 **VO** (18 words, ~8 s):
 > Assembly A.I. provides the ears, but it never makes the medical decision. Every
@@ -58,14 +59,14 @@ pill: `Protocol: ~20 ms · Live agent: ~1.0 s`.
 `[Bleeding only if the cardiac flow is complete by Sep 24.]`
 
 **Option A — bleeding** (Rana's storyboard): rescuer shouts "Right thigh!" → the
-3D body highlights the femoral artery and draws the tourniquet line 2–3 inches
+the cockpit highlights the limb and draws the tourniquet line 2–3 inches
 above the wound.
 
 **Option B — no bleeding:** close-up on the rescue timeline and the latency pill.
 
 **VO for option B** (27 words, ~11 s):
-> Protocol lines play in milliseconds. Questions nobody scripted go to
-> Assembly A.I.'s Voice Agent API, which answers in about a second. And the
+> Assembly A.I. hears every word in real time. Protocol lines answer in
+> twenty milliseconds, live questions in under half a second. And the
 > metronome never stops.
 
 ## 1:55–2:15 · Paramedics arrive

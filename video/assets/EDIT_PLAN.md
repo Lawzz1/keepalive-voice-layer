@@ -39,7 +39,7 @@ Stems, the mix, the MP3 and the MP4 are not committed — re-run the script.
 | 0:06.4 | 0:12.3 | narration | `video/voiceover/vo_02_stat.wav` | Every year, over 350,000 Americans have a cardiac arrest outside a hospital. Most don't survive. |  |
 | 0:15.0 | 0:17.7 | caller | `video/assets/audio/caller_01.wav` | Help! My dad just collapsed, he's not breathing! | placeholder voice |
 | 0:18.0 | 0:27.8 | app | `web/audio/cpr_01_confirm.wav` | Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. We need to start CPR immediately! Lay them flat on firm ground. | protocol locks |
-| 0:28.1 | 0:31.3 | app | `web/audio/cpr_03_position.wav` | Put heel of hand on center of chest, lock your elbows straight. | SVG manikin: hand placement |
+| 0:28.1 | 0:31.3 | app | `web/audio/cpr_03_position.wav` | Put heel of hand on center of chest, lock your elbows straight. | Cockpit: hand placement on the pacing feed |
 | 0:31.5 | 0:40.6 | app | `web/audio/cpr_04_start_beat.wav` | Ready: 3... 2... 1... PUSH! Push hard and fast to the beat! Push down two inches, let the chest rise fully every time. | metronome starts |
 | 0:44.6 | 0:48.5 | app | `web/audio/cpr_05_recoil.wav` | Keep pushing to the beat. Allow full chest recoil. Do not lean on the chest. | cut by the agonal alert |
 | 0:46.1 | 0:48.2 | caller | `video/assets/audio/caller_02.wav` | He's gasping! Is he breathing again? | placeholder voice · our line steps back |
@@ -49,7 +49,7 @@ Stems, the mix, the MP3 and the MP4 are not committed — re-run the script.
 | 1:09.4 | 1:11.9 | caller | `video/assets/audio/caller_03.wav` | I heard a crack in his chest! Did I break his rib? | placeholder voice |
 | 1:12.2 | 1:17.0 | app | `web/audio/qa_rib_pop.wav` | A rib pop can happen during effective CPR. Do not stop, keep pushing to the beat. | instant pre-recorded answer |
 | 1:26.0 | 1:32.4 | narration | `video/voiceover/vo_03_architecture.wav` | Assembly A.I. provides the ears, but it never makes the medical decision. Every critical step comes from a locked protocol. |  |
-| 1:35.9 | 1:45.7 | narration | `video/voiceover/vo_04_hybrid.wav` | Protocol lines play in milliseconds. Questions nobody scripted go to Assembly A.I.'s Voice Agent API, which answers in about a second. And the metronome never stops. |  |
+| 1:35.9 | 1:45.7 | narration | `video/voiceover/vo_04_hybrid.wav` | Assembly A.I. hears every word in real time. Protocol lines answer in twenty milliseconds, live questions in under half a second. And the metronome never stops. |  |
 | 1:54.0 | 1:55.1 | caller | `video/assets/audio/caller_04.wav` | The paramedics are here! | placeholder voice |
 | 1:55.4 | 2:04.1 | app | `web/audio/cpr_06_paramedics.wav` | Stop compressions and step back. Let the paramedics take over. The emergency timeline is saved on your screen. Take a slow, deep breath. | timers freeze |
 | 2:05.1 | 2:10.6 | app | `video/assets/audio/agent_grounding.wav` | The paramedics are in charge now. Take a slow, deep breath with me. You did everything you could. | agent via /speak, same voice |

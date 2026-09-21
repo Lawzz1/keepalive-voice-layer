@@ -183,7 +183,7 @@ def build_timeline():
     # 0:15 live run
     c1 = add(15.0, "caller", "caller_01", AUDIO, "placeholder voice")
     a1 = add(c1["end"] + REACT, "app", "cpr_01_confirm", CLIPS, "protocol locks")
-    a3 = add(a1["end"] + 0.25, "app", "cpr_03_position", CLIPS, "SVG manikin: hand placement")
+    a3 = add(a1["end"] + 0.25, "app", "cpr_03_position", CLIPS, "Cockpit: hand placement on the pacing feed")
     a4 = add(a3["end"] + 0.25, "app", "cpr_04_start_beat", CLIPS, "metronome starts")
     beat_on = a4["t"]
     a5 = add(a4["end"] + 4.0, "app", "cpr_05_recoil", CLIPS)
@@ -325,7 +325,7 @@ def cards_html(scenes):
         "03_todo_live_run": todo("Live run — one unedited take", [
             "Caller speaks → live transcript appears",
             "● PROTOCOL LOCKED: AHA-BLS badge + red Call 911 button",
-            "SVG manikin: hand placement, then sternum + ripple on the beat (110 BPM)",
+            "Pacing panel: clinical feed, 110 BPM ring pulsing on the beat, depth gauge",
             "“Gasping” → critical alert cuts in (callout)",
             "Rib question → instant answer, metronome keeps going",
             "Latency pill visible the whole time · clock + “Unedited live run” tag",
