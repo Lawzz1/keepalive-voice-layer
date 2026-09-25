@@ -38,6 +38,18 @@ class GateResult:
 
 
 def gate(text: str, protocol_state: str = "active") -> GateResult:
+    # "briefing" is the EMS handover report read to the paramedics: machine-built
+    # from the incident log, not conversation. The forbidden phrases still apply,
+    # but the three-sentence cap does not — trimming it drops clinical facts.
+    if protocol_state == "briefing":
+        clean = " ".join(text.split())
+        if not clean:
+            return GateResult(FALLBACK_AFTER, "replaced", "empty")
+        for pattern, reason in FORBIDDEN_ALWAYS:
+            if re.search(pattern, clean, re.I):
+                return GateResult(FALLBACK_AFTER, "replaced", reason)
+        return GateResult(clean, "passed")
+
     active = protocol_state == "active"
     fallback = FALLBACK_ACTIVE if active else FALLBACK_AFTER
     clean = " ".join(text.split())

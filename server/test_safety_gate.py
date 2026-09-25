@@ -68,3 +68,24 @@ def test_after_the_emergency_allows_water_and_trims():
 def test_after_the_emergency_has_no_closing():
     r = gate("The paramedics will keep him stable.", "handoff")
     assert not r.text.endswith(CLOSING)
+
+
+def test_briefing_keeps_the_whole_ems_report():
+    """The handover report is machine-built from the log: trimming it loses facts."""
+    report = ("EMS Handoff: ADULT patient with Cardiac Arrest. Bystander CPR performed "
+              "for 50 seconds, approximately 92 compressions delivered at 110 BPM. "
+              "Initial presentation included agonal gasping. Public access AED was deployed.")
+    result = gate(report, "briefing")
+    assert result.action == "passed"
+    assert result.text == report
+    assert "AED was deployed" in result.text
+
+
+def test_briefing_still_blocks_a_dose():
+    result = gate("Give him 0.3 mg of epinephrine on arrival.", "briefing")
+    assert (result.action, result.reason) == ("replaced", "dose")
+
+
+def test_briefing_never_appends_the_cpr_closing():
+    result = gate("Patient handed over to Medic-4.", "briefing")
+    assert CLOSING not in result.text
