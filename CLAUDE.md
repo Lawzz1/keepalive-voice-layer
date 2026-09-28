@@ -106,6 +106,11 @@ My scope:
 - `tools/line_audit.py` — takes Rana's screen recording (or a transcript), transcribes it
   and says which clips still match his engine word for word, which drifted, and which
   lines he speaks that have no clip. Prints the `render --only` command
+- `tools/storyboard_art.py` — the nine storyboard drawings as SVG, shared by the sheet and
+  the animatic, so a shot that changes on set changes in one place
+- `tools/build_animatic.py` — the storyboard as a 90 s video with the real soundtrack:
+  the clips at their real moments, a 110 BPM metronome from 0:35 to 1:10, the closing
+  narration. The film's timing, for the shoot and the edit
 - `tools/md_to_pdf.py` — any doc → A4 PDF for WhatsApp (`md_to_pdf.py in.md out.pdf`)
 - `.env` — `ELEVENLABS_API_KEY=...`, read by the renderer (gitignored, never commit)
 
@@ -274,6 +279,17 @@ keyed by *his* ids, so the backend can ask for a clip by the name it already use
 21 protocol directives (adult/child/infant CPR, choking ×3, bleed, anaphylaxis, overdose)
 and 26 micro-Q&A answers. Number-heavy lines verified by transcribing them back.
 Re-run the sync after he edits a line: it prints exactly what drifted.
+
+**Sep 26–28 — the live app moved to https://keepalive-fmdh.onrender.com** (the old
+`keepalive-dpt7` service died with 503s). Five more PRs, all merged: #3 the EMS briefing in
+our voice + the `briefing` gate state; #4 the iOS mic (AudioContext after the await, the
+half-open failure path, and the error nobody rendered); #5 one shared AudioContext — Safari
+allows only a handful per page and the cockpit made four; #6 a mic context that matches the
+stream's sample rate, plus naming the failing call; #7 clipVoice taking the shared context
+itself, so the handover briefing speaks in Sarah's voice on a reloaded page too.
+**Merging does not deploy reliably** — check the bundle hash at `/assets/index-*.js` after
+every merge. The shoot is a three-person scene filmed on a phone: storyboard, camera plan
+and animatic in `video/assets/`.
 
 **Sep 22 — two PRs open in Rana's repo** (push access granted Sep 20):
 - **#1 `feat/human-voice-clips`** — 58 clips (3.0 MB Opus) in `client/public/audio`,
