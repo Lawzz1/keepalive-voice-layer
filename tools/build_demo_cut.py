@@ -68,7 +68,7 @@ SEGMENTS = [
     ("d_cpr",     "IMG_4269", 2.0,  "IMG_4273", 0.5, 12.5, "компрессии · на экране пошёл ритм"),
     # 4270 opens on the rescuer asking about the rib — that line has to be heard
     ("e_rib",     "IMG_4270", 0.3,  "IMG_4274", 0.5, 11.0, "«Did I break his rib?» · ответ · парамедики"),
-    ("f_report",  "IMG_4274", 14.5, None,       0.0, 11.0, "карточка передачи парамедикам"),
+    ("f_report",  "IMG_4274", 14.5, "SLIDE",    0.0, 11.0, "экран выезжает из правой половины в центр"),
     # Sarah finishes the report, and the cut goes straight to the site
     ("j_read",    "88",       2.6,  None,       0.0, 15.6, "Сара читает отчёт до последнего слова"),
     ("k_themes",  "-",        7.0,  "TOUR:vo_14_themes:1.0:1.05:0.5:0.28", 0.6,  9.6,
@@ -283,6 +283,39 @@ def black(dur: float, dest: Path):
          str(dest)])
 
 
+def slide_to_centre(src: Path, start: float, dur: float, dest: Path,
+                    crop: str = "", trim: int = 0, glide: float = 0.9):
+    """The screen that was on the right walks into the middle.
+
+    Cutting straight from the split to a centred screen reads as a jump: the
+    same panel is suddenly somewhere else. Moving it there instead keeps the
+    eye on it, and the shot becomes one continuous thought.
+    """
+    sw, sh = probe_size(src)
+    sh -= trim
+    w = (round(TALL * sw / sh) // 2) * 2
+
+    # where it sat in the split, and where it is going
+    lw = (round(TALL * 720 / 1280) // 2) * 2
+    total = lw + GAP + w + 12
+    x_from = (W - total) // 2 + lw + 6 + GAP
+    x_to = (W - w) // 2
+    y = (H - TALL) // 2
+
+    ease = f"(1-pow(1-min(t/{glide},1),3))"          # fast, then settling
+    x_expr = f"{x_from}+({x_to}-{x_from})*{ease}"
+
+    run(["ffmpeg", "-nostdin", "-v", "error", "-y",
+         "-ss", str(start), "-t", str(dur), "-i", str(src),
+         "-filter_complex",
+         f"[0:v]{crop}{BG}[bg];[0:v]{crop}scale={w}:{TALL}[fg];"
+         f"[bg][fg]overlay=x='{x_expr}':y={y},fps={FPS},format=yuv420p[v]",
+         "-map", "[v]", "-map", "0:a",
+         "-c:v", "libx264", "-crf", "20", "-preset", "medium",
+         "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+         str(dest)])
+
+
 def ending(dest: Path):
     """Two seconds of black, then the card under the closing line."""
     run(["ffmpeg", "-nostdin", "-v", "error", "-y",
@@ -332,6 +365,9 @@ def main():
                      ROOT / "video" / "voiceover" / f"{vo}.wav", rstart,
                      crop=screen_filter(lsrc), duck_only=over_ambience,
                      duck_db=-6.0 if over_ambience else -13.0)
+        elif rsrc == "SLIDE":
+            slide_to_centre(left, lstart, dur, dest,
+                            screen_filter(lsrc), screen_trim(lsrc))
         elif rsrc == "PUSH":
             push_in(left, lstart, dur, dest)
         elif rsrc == "FADEIN":
