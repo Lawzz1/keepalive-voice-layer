@@ -60,9 +60,9 @@ BG = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
 
 # (name, left source, left in, right source or None, right in, duration, what it is)
 SEGMENTS = [
-    ("z_hook",    "-",        0.0,  "TITLE:What if you are the only person there?", 0.0, 3.2,
-     "крючок: чёрный экран с вопросом"),
-    ("a_walk",    "IMG_4266", 0.6,  None,       0.0,  9.2, "идёт, хватается за грудь, падает"),
+    ("z_hook",    "-",        0.0,  "BLACKVO:vo_01_hook", 0.5, 5.4,
+     "крючок: чёрный экран, вопрос голосом Эрика"),
+    ("a_walk",    "IMG_4266", 0.6,  "VO:vo_02_stat", 1.2, 9.2, "идёт и падает · статистика голосом Эрика"),
     ("b_run",     "IMG_4266", 13.4, None,       0.0,  5.6, "спасатель подбегает и опускается"),
     ("c_hands",   "IMG_4267", 0.4,  "IMG_4272", 2.0,  9.0, "руки на грудине · на экране фраза и вызов"),
     ("d_cpr",     "IMG_4269", 2.0,  "IMG_4273", 0.5, 12.5, "компрессии · на экране пошёл ритм"),
@@ -73,7 +73,7 @@ SEGMENTS = [
     ("j_read",    "88",       2.6,  None,       0.0, 15.6, "Сара читает отчёт до последнего слова"),
     ("k_themes",  "-",        6.0,  "TOUR:vo_14_themes:1.0:1.07:0.5:0.30", 0.5,  5.4,
      "три темы интерфейса · Эрик про режимы"),
-    ("l_arch",    "-",       19.0,  "TOUR:vo_12_ears:1.04:1.18:0.5:0.44",  0.4,  8.6,
+    ("l_arch",    "-",       19.0,  "TOUR:vo_03_architecture:1.04:1.18:0.5:0.44", 0.4, 7.6,
      "живой прогон на сайте · Эрик про архитектуру"),
     ("m_speed",   "-",       36.0,  "TOUR:vo_13_speed:1.25:1.48:0.64:0.46", 0.3,  7.4,
      "наезд на кольцо ритма · Эрик про задержки"),
@@ -184,7 +184,8 @@ def fade_in_single(src: Path, start: float, dur: float, dest: Path):
 
 
 def narrated(src: Path, start: float, dur: float, dest: Path,
-             voice: Path, voice_at: float, duck_db: float = -13.0, crop: str = ""):
+             voice: Path, voice_at: float, duck_db: float = -13.0, crop: str = "",
+             duck_only: bool = False):
     """The app speaks first, then hands the floor to the narrator.
 
     Never both at once: the source audio plays at full level, fades out just
@@ -192,13 +193,16 @@ def narrated(src: Path, start: float, dur: float, dest: Path,
     over one another is the fastest way to make a demo unwatchable.
     """
     fade_at = max(0.0, voice_at - 0.5)
+    # Street ambience can stay under a narrator; another voice cannot.
+    room_audio = (f"volume={duck_db}dB" if duck_only
+                  else f"afade=t=out:st={fade_at:.2f}:d=0.5")
     run(["ffmpeg", "-nostdin", "-v", "error", "-y",
          "-ss", str(start), "-t", str(dur), "-i", str(src),
          "-i", str(voice),
          "-filter_complex",
          f"[0:v]{crop}{BG}[bg];[0:v]{crop}scale=-2:{H}[fg];"
          f"[bg][fg]overlay=(W-w)/2:0,fps={FPS},format=yuv420p[v];"
-         f"[0:a]afade=t=out:st={fade_at:.2f}:d=0.5,"
+         f"[0:a]{room_audio},"
          f"aformat=sample_rates=48000:channel_layouts=stereo[room];"
          f"[1:a]adelay={int(voice_at*1000)}|{int(voice_at*1000)},"
          f"aformat=sample_rates=48000:channel_layouts=stereo[nar];"
@@ -252,6 +256,20 @@ def title_card(text: str, dur: float, dest: Path, size: int = 76):
          str(dest)])
 
 
+def black_with_voice(dur: float, dest: Path, voice: Path, voice_at: float = 0.6):
+    """Black, and a question. The film has not shown anything yet."""
+    run(["ffmpeg", "-nostdin", "-v", "error", "-y",
+         "-f", "lavfi", "-t", str(dur), "-i", f"color=c=black:s={W}x{H}:r={FPS}",
+         "-i", str(voice),
+         "-filter_complex",
+         f"[1:a]adelay={int(voice_at*1000)}|{int(voice_at*1000)},apad,atrim=0:{dur},"
+         f"aformat=sample_rates=48000:channel_layouts=stereo[a]",
+         "-map", "0:v", "-map", "[a]", "-pix_fmt", "yuv420p",
+         "-c:v", "libx264", "-crf", "20", "-preset", "medium",
+         "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+         str(dest)])
+
+
 def black(dur: float, dest: Path):
     """A held breath. Nothing on screen, nothing in the speakers."""
     run(["ffmpeg", "-nostdin", "-v", "error", "-y",
@@ -294,7 +312,9 @@ def main():
         if lsrc != "-" and not left.exists():
             sys.exit(f"missing footage: {left}")
         dest = SCRATCH / f"{name}.mp4"
-        if rsrc and rsrc.startswith("TITLE:"):
+        if rsrc and rsrc.startswith("BLACKVO:"):
+            black_with_voice(dur, dest, ROOT / "video" / "voiceover" / f"{rsrc[8:]}.wav", rstart)
+        elif rsrc and rsrc.startswith("TITLE:"):
             title_card(rsrc[6:], dur, dest)
         elif rsrc == "BLACK":
             black(dur, dest)
@@ -304,9 +324,12 @@ def main():
                  ROOT / "video" / "voiceover" / f"{vo}.wav", rstart,
                  float(zf), float(zt), float(cx), float(cy))
         elif rsrc and rsrc.startswith("VO:"):
+            vo = rsrc[3:]
+            over_ambience = vo.startswith("vo_02")
             narrated(left, lstart, dur, dest,
-                     ROOT / "video" / "voiceover" / f"{rsrc[3:]}.wav", rstart,
-                     crop=screen_filter(lsrc))
+                     ROOT / "video" / "voiceover" / f"{vo}.wav", rstart,
+                     crop=screen_filter(lsrc), duck_only=over_ambience,
+                     duck_db=-6.0 if over_ambience else -13.0)
         elif rsrc == "PUSH":
             push_in(left, lstart, dur, dest)
         elif rsrc == "FADEIN":
@@ -337,9 +360,19 @@ def main():
     # point — but a judge on laptop speakers should still be able to read it.
     srt = OUT / "keepalive_demo.srt"
     if srt.exists():
-        style = ("FontName=Helvetica,Fontsize=21,PrimaryColour=&H00FFFFFF,"
-                 "OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=0,"
-                 "Alignment=2,MarginV=52")
+        # libass scales against PlayResY (384), so these are roughly 42 px of
+        # type sitting ~45 px off the bottom edge: readable, and clear of the UI.
+        # Plain white, no rim. A soft shadow instead, or the text disappears
+        # against the cobblestones and the white clinical theme.
+        # No rim, as asked — but pure white vanishes over the white clinical
+        # theme, so the shadow does the work of separating text from picture.
+        # Small type, but on a dark plate rather than bare on the picture:
+        # white text alone disappears over the clinical theme and the cobbles.
+        # No plate. A hairline rim is the least that still separates white
+        # type from a white interface; without any it washes out completely.
+        style = ("FontName=Helvetica,Fontsize=15,PrimaryColour=&H00FFFFFF,"
+                 "OutlineColour=&HC0000000,BorderStyle=1,Outline=1.1,Shadow=0.4,"
+                 "Alignment=2,MarginV=16")
         run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(joined),
              "-vf", f"subtitles={srt}:force_style='{style}'",
              "-c:v", "libx264", "-crf", "20", "-preset", "medium",
