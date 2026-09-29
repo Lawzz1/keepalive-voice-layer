@@ -57,13 +57,15 @@ def record(dest_dir: Path) -> Path:
         page.wait_for_timeout(1400)
         scroll_to(160, 1200, 700)
 
-        # 2 — the three display modes, held long enough to see each one land
-        for theme in ["Tactical", "High-Contrast", "Clinical"]:
+        # 2 — the three display modes. The alert theme is the one a judge asks
+        # about, so it gets the longest hold.
+        # match the visible label, not the tooltip: the button reads "🚨 ALERT"
+        for theme, hold in [("TACTICAL", 2800), ("ALERT", 4400), ("CLINICAL", 2200)]:
             try:
                 page.get_by_role("button", name=re.compile(theme, re.I)).first.click(timeout=4000)
             except Exception:
                 pass
-            page.wait_for_timeout(2600)
+            page.wait_for_timeout(hold)
 
         # 3 — start a real run, so the tour shows the app working, not a static page
         for label in ["Dad collapsed", "Hands placed"]:
@@ -88,9 +90,11 @@ def record(dest_dir: Path) -> Path:
         page.wait_for_timeout(1200)
         scroll_to(1150, 1500, 2800)
 
-        # 7 — the handover card at the bottom
-        scroll_to(1700, 1900, 2600)
-        scroll_to(2100, 1500, 2200)
+        # 7 — the handover card, then the very bottom: the QR the paramedics scan
+        scroll_to(1700, 1900, 2400)
+        scroll_to(2400, 1800, 2200)
+        page.evaluate("() => window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})")
+        page.wait_for_timeout(4200)
 
         context.close()          # the file is only written on close
         browser.close()
