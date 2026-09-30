@@ -6,13 +6,34 @@ KeepAlive talks a bystander through CPR, hands-free. The rescuer speaks;
 AssemblyAI listens; a locked protocol decides what happens next; one calm voice
 tells them what to do over a 110 BPM compression beat.
 
-This repository is the audio side of the project, built for the
+This repository is the **voice layer** of KeepAlive, built for the
 [AssemblyAI Voice Agent Hackathon](https://lablab.ai/ai-hackathons/assemblyai-voice-agent-hackathon):
-the pre-rendered protocol voice, the browser audio engine that plays it with
-near-zero delay, and a reference endpoint that speaks the AI agent's answers in
-the same voice after a deterministic safety check.
+the pre-rendered protocol speech, the browser audio engine that plays it with
+near-zero delay, the deterministic gate every generated sentence passes before it
+is spoken, and the tooling that produced the demo film.
 
 > KeepAlive coaches; it does not replace emergency services.
+
+## Where this sits
+
+The full application — streaming triage, the protocol state machine, the cockpit —
+lives in **[ranazain9/keepalive](https://github.com/ranazain9/keepalive)**, built by
+Rana Zain with Rida Zafar. What is in *this* repository is my part of it, kept
+separate because it is self-contained and because the measurements and decisions
+behind it are worth reading on their own:
+
+| Mine | Theirs |
+|---|---|
+| 58 protocol and companion lines, rendered and loudness-normalised | AssemblyAI streaming triage and the intent router |
+| `web/audio-controller.js` — metronome, ducking, priority queue, mic framing | the AHA-BLS protocol state machine |
+| `server/safety_gate.py` + `/speak` — the gate and the live-answer endpoint | the React cockpit, CAD simulation, EMS handover |
+| the demo film: script, narration, storyboard, cut | the deployment |
+
+Everything here landed in the main repository as pull requests #1 through #8.
+
+`tools/engine_lines.py` is generated from the main project's `protocols.py` and
+`micro_qa_engine.py` — the spoken texts in it are theirs, used under MIT so the
+clips match the engine word for word.
 
 ## Design: deterministic where safety matters, generative where flexibility matters
 
@@ -145,6 +166,23 @@ server/INTEGRATION.md        how to include /speak in the team backend
 docs/agent-spec.md           agent prompt, the say() tool, the gate and 30 test questions
 docs/demo-voiceover.md       demo video script
 video/voiceover/             demo narration (voice: Eric)
+```
+
+## The demo film
+
+The submission video was shot on a street in one take, with three people: someone
+collapses, a bystander drops a phone on the ground and works on his chest, a third
+films it. The voice in it is the app speaking out of that phone, caught by the
+camera microphone — nothing is dubbed, which is the point.
+
+The tooling that built it is here: `tools/build_demo_cut.py` assembles the cut from
+the raw takes and the narration, `tools/capture_site_tour.py` records the live
+cockpit at 1920x1080 for the explainer section, `tools/storyboard_art.py` and
+`tools/build_animatic.py` produced the storyboard and a timed animatic before the
+shoot, and `docs/shoot-plan.md` is the plan the day ran on.
+
+```bash
+python3 tools/build_demo_cut.py        # → video/assets/keepalive_demo.mp4
 ```
 
 ## License
