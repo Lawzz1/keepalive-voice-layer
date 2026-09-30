@@ -1,32 +1,33 @@
-# keep-Alive — audio layer
+# KeepAlive — audio layer
 
-keep-Alive is a hackathon project (AssemblyAI) that talks a bystander through CPR.
-The phone lies on the floor on speaker: it plays a 110 BPM compression metronome
-and spoken protocol directives, while AssemblyAI streaming STT listens for
-questions ("I heard a rib pop") and for agonal gasping.
+KeepAlive is a hackathon project (AssemblyAI Voice Agent Hackathon, lablab.ai) that
+talks a bystander through CPR. The phone lies on the floor on speaker: it plays a
+110 BPM compression metronome and spoken protocol directives, while AssemblyAI
+streaming STT listens for questions ("I heard a rib pop") and for agonal gasping.
 
-This folder is the audio layer only. The main app and repo belong to Rana; this
-work will land there as a contributor PR, so keep it self-contained.
+This folder is the audio layer only. The main application lives in
+`ranazain9/keepalive`; everything here landed there as pull requests #1–#8, so keep
+this repository self-contained.
 
 Demo format (team, Sep 12): shown on a laptop as a web-based dashboard — a concept
 demo of how it works, not a shipped phone app. Laptop speakers + laptop mic are the
 real target; phone-specific work (iOS quirks, floor test) is secondary.
 
 Team (Sep 13): Rana (lead — pipelines, FastAPI backend, dashboard), Rida Zafar
-(joined Sep 13; software engineering undergrad, first hackathon), and me.
-Decided Sep 13 by Rana: backend first, dashboard after — Rana and Rida build it
-together. The dashboard includes a 3D human body showing correct CPR hand
-placement — it should sync to `cpr_03_position` via the controller's `clipstart`
-event (detail.id). So the dashboard lands late, and the
-demo video can only be screen-recorded at the very end: everything else for the
-video (voiceover text, recorded narration) must be ready before that.
+(joined Sep 13), and me. Decided Sep 13 by Rana: backend first, dashboard after —
+Rana and Rida build it together. The dashboard includes a 3D human body showing
+correct CPR hand placement — it syncs to `cpr_03_position` via the controller's
+`clipstart` event (`detail.id`). The dashboard therefore lands late, and the demo
+video can only be screen-recorded at the very end: everything else for the video
+(voiceover text, recorded narration) must be ready before that.
+
 Hackathon: lablab.ai AssemblyAI Voice Agent Hackathon, team page "keep-alive".
 Runs Sep 1–30, 2026. Prizes: 5 equal winners, each $1,000 cash + $1,000 API
 credits (no ranking between them). Submissions must be original and MIT-compliant,
 so the code ends up MIT-licensed. Payout can take up to 90 days.
-**Submission deadline: Sep 30, 6:00 PM EEST (= 17:00 CEST).** ~3,000 registered
-participants as of Sep 14. The public page lists no submission format or judging
-criteria — check the team page once joined.
+**Submission deadline: Sep 30, 6:00 PM EEST (= 17:00 CEST).** Final counts on the
+live page at the deadline: 4,120 participants, 1,311 teams, 404 submissions,
+138 drafts. The public page never listed a submission format or judging criteria.
 The team WhatsApp group has 24 h disappearing messages — decisions go in this file.
 
 Team plan (Sep 12): Rana builds the pipelines → pushes to git → FastAPI backend →
@@ -41,23 +42,23 @@ voiceover narrates how the system works, built around a caller saying
 Agreed architecture (Sep 13, team confirmed) — the demo pitch:
 "deterministic where safety matters, generative where flexibility matters".
 - CPR protocol steps: pre-recorded clips, zero latency, fixed medical wording
-- Conversation, questions, post-event debrief and paramedic handoff: **AssemblyAI Voice
-  Agent API** (decided Sep 16 by Rana) — one WebSocket for STT + LLM + TTS + turn-taking
-  + tool calling, ~1 s. Replaces the separate LLM + ElevenLabs plan
-- Dashboard HUD latency pill: "Protocol Directive: ~15 ms · AssemblyAI Live Agent: ~1.0 s".
-  The controller reports trigger→sound per line as `clipstart` `detail.latencyMs`
+- Conversation, questions, post-event debrief and paramedic handoff: originally the
+  AssemblyAI Voice Agent API (Sep 16) — **superseded Sep 18**, see "the real
+  architecture" below
+- Dashboard HUD latency pill. The controller reports trigger→sound per line as
+  `clipstart` `detail.latencyMs`
 - 911 (decided Sep 16, AHA/ERC: call first, then compress): line 1 says "Call 911 now and
   put it on speaker!…"; a persistent red "Call 911 (Speakerphone)" button on the
   dashboard; the agent repeats the 911 instruction if asked about an ambulance
 - The dashboard shows which live event triggered each line, so judges can see it's real
-- The qa_* clips stay as instant fallbacks if a live answer is slow — not yet confirmed with the team
+- The `qa_*` clips double as instant fallbacks if a live answer is slow
 
 My scope:
 1. Pre-rendered voice directives (ElevenLabs → normalised WAV + manifest) — assigned
 2. The 2:30 demo video voiceover — assigned; draft due Sep 25, and the dashboard lands last
 3. Browser audio controller — built on my own initiative, offered to the team, not requested
 
-## Audio spec (Rana, Sep 10) — don't change without asking her
+## Audio spec (Rana, Sep 10) — agree any change with her first
 
 - Clips: 48 kHz / 16-bit mono WAV, -14 LUFS integrated, True Peak -1.0 dBTP
 - Ducking: metronome drops **-4 dB** over 40 ms when a line starts, returns over 150 ms.
@@ -72,45 +73,50 @@ My scope:
   stays open** (`micGate: 'off'`): Chrome's echo cancellation removes 32 dB and the backend
   drops transcripts that match the line being spoken, so the rescuer can interrupt anytime
 - **Voice locked Sep 16: "Sarah — Mature, Reassuring, Confident"**, `EXAVITQu4vr4xnSDxMaL`.
-  Runner-up Eric (`cjVigY5qzO86Huf0OWal`) — use him for the demo video narration, so the
+  Runner-up Eric (`cjVigY5qzO86Huf0OWal`) — used for the demo video narration, so the
   narrator doesn't sound like the app. Re-render: `render --voice-id EXAVITQu4vr4xnSDxMaL`
-- TTS for pre-rendered lines: ElevenLabs `eleven_flash_v2_5`. Live answers now come from
-  the Voice Agent API's own TTS (Sep 16), so the two voices differ unless matched
+- TTS for pre-rendered lines: ElevenLabs `eleven_flash_v2_5`. Live answers go through
+  `/speak` in the same voice (Sep 18 onward), so there is one voice everywhere
 
 ## Layout
 
 - `tools/render_directives.py` — renderer. Modes: `voices`, `audition`, `render`, `placeholder`
 - `web/audio-controller.js` — the controller, one ES module, no dependencies, no build step
 - `web/index.html` — test bench: scenarios, level scope, queue and event log
-- `web/audio/` — rendered clips + `manifest.json` (generated, gitignored until the voice is locked)
+- `web/audio/` — rendered clips + `manifest.json` (generated)
 - `web/audition.html` — voice audition page: plays the candidates through the controller, metronome underneath
 - `web/audition/` — audition renders + manifest (gitignored)
 - `web/leak-test.html` — measures how much of the app's voice leaks into the mic
 - `server/speak_server.py` — reference `POST /speak` (FastAPI): agent text → `safety_gate`
   → ElevenLabs in the clips' voice (read from `web/audio/manifest.json`) → PCM16 24 kHz
   stream. Also serves `web/`. Binds to 127.0.0.1 only — the key must not be reachable from
-  the network. A reference for Rana's backend, not the backend itself
+  the network. A reference for the team backend, not the backend itself
 - `server/speak_router.py` — the same `/speak` as a FastAPI router with the `SARAH` voice
-  constants: what Rana includes in `server/main.py` (`server/INTEGRATION.md`).
+  constants: what gets included in `server/main.py` (`server/INTEGRATION.md`).
   `speak_server.py` is now just the bench server around it
 - `server/safety_gate.py` + tests — the deterministic text gate from
   `docs/agent-spec.md` section 4; `test_speak_router.py` checks the router offline and that
   `SARAH` matches the manifest (29 tests)
 - `video/voiceover/` — demo video narration, voice Eric (`voiceover` mode)
-- `tools/build_video_draft.py` — the video draft kit, before the dashboard exists: renders
-  the caller placeholder (ElevenLabs "Liam") and the agent's grounding line, mixes the
-  2:24 soundtrack with the controller's behaviour, draws 1920x1080 cards (TO RECORD
+- `tools/build_video_draft.py` — the video draft kit, from before the dashboard existed:
+  renders the caller placeholder (ElevenLabs "Liam") and the agent's grounding line, mixes
+  the 2:24 soundtrack with the controller's behaviour, draws 1920x1080 cards (TO RECORD
   placeholders where dashboard footage goes), a slideshow MP4 and `EDIT_PLAN.md`, all in
   `video/assets/`. Big outputs are gitignored — re-run the script
 - `docs/video-shot-list.md` — what the dashboard must show in the video, for Rana and Rida
-- `tools/line_audit.py` — takes Rana's screen recording (or a transcript), transcribes it
-  and says which clips still match his engine word for word, which drifted, and which
-  lines he speaks that have no clip. Prints the `render --only` command
+- `tools/line_audit.py` — takes a screen recording (or a transcript), transcribes it and
+  says which clips still match the engine word for word, which drifted, and which spoken
+  lines have no clip. Prints the `render --only` command
 - `tools/storyboard_art.py` — the nine storyboard drawings as SVG, shared by the sheet and
   the animatic, so a shot that changes on set changes in one place
 - `tools/build_animatic.py` — the storyboard as a 90 s video with the real soundtrack:
   the clips at their real moments, a 110 BPM metronome from 0:35 to 1:10, the closing
   narration. The film's timing, for the shoot and the edit
+- `tools/capture_site_tour.py` — records the live cockpit at 1920x1080 (Playwright,
+  silent) for the explainer half of the film: the three themes by visible label, then a
+  scroll to the QR at the bottom of the page
+- `tools/build_demo_cut.py` — the finished cut: the phone takes, the site tour and the two
+  narrations into `video/assets/keepalive_demo.mp4` with burnt-in subtitles
 - `tools/md_to_pdf.py` — any doc → A4 PDF for WhatsApp (`md_to_pdf.py in.md out.pdf`)
 - `.env` — `ELEVENLABS_API_KEY=...`, read by the renderer (gitignored, never commit)
 
@@ -123,6 +129,7 @@ python3 tools/render_directives.py render --voice-id A
 python3 -m http.server 8765 -d web                         # bench at localhost:8765
 python3 server/speak_server.py                             # bench + /speak at localhost:8766
 python3 -m pytest -q server                                # safety gate tests
+python3 tools/build_demo_cut.py                            # → video/assets/keepalive_demo.mp4
 ```
 
 Measured Sep 17 through the bench's "Live answer" panel: click → Sarah audible in
@@ -141,11 +148,11 @@ ElevenLabs response, median of 8: 244 ms → **141 ms**. `--port` runs a second 
 | cpr_04_start_beat | normal |
 | cpr_05_recoil | normal |
 | cpr_06_paramedics | normal |
-| cpr_07_aed | normal — Rana, Sep 17: "AED retrieval is already in Step 1" — which text? open |
+| cpr_07_aed | normal — AED retrieval also appears in the engine's own step 1 |
 | qa_rib_pop | response |
 | qa_bed_surface | response |
 | qa_vomit | response |
-| qa_tired | response — added Sep 17 (Rana lists "I'm tired" as a whitelisted answer) |
+| qa_tired | response — added Sep 17 ("I'm tired" is a whitelisted answer) |
 | qa_fallback | response |
 
 - critical: cuts whatever is playing, plays next
@@ -153,6 +160,8 @@ ElevenLabs response, median of 8: 244 ms → **141 ms**. `--port` runs a second 
 - normal: FIFO
 
 Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from it.
+These 12 are the originals; the 46 engine lines merged in on Sep 21 are keyed by the
+backend's own ids (see "the whole engine is rendered in Sarah's voice" below).
 
 ## Controller decisions
 
@@ -166,119 +175,134 @@ Clip text lives in `DIRECTIVES` in the renderer; the manifest is generated from 
 - 250 ms gap between back-to-back lines, metronome stays ducked through it
 - Mic gate reopens 250 ms after the voice ends (output latency + room echo)
 - `navigator.audioSession.type = 'playback'` on unlock, or iOS silent mode mutes everything
-- Voice Agent replies: `openStream()` at `reply.started`, `push()` each `reply.audio`
-  `data`, `end()` at `reply.done` completed / `flush()` if interrupted. They queue as
-  `response`; a critical clip cuts them and their late chunks are ignored; they leave
-  the mic open (`streamGate: false`) so the agent's barge-in still hears the caller
-- `micToPcm16(micStream, { onFrame })` → base64 PCM16 24 kHz frames for `input.audio`,
-  zeros while our clip is audible, frames never stop
-- `clipstart` carries `latencyMs` (trigger → audible) and, for agent replies,
+- Streamed replies: `openStream()` at the start, `push()` per chunk, `end()` when the
+  stream completes / `flush()` if interrupted. They queue as `response`; a critical clip
+  cuts them and their late chunks are ignored; they leave the mic open
+  (`streamGate: false`) so barge-in still hears the caller
+- `micToPcm16(micStream, { onFrame })` → base64 PCM16 frames, zeros while our clip is
+  audible, frames never stop. **16 kHz for the AssemblyAI streaming socket**
+  (`sampleRate: 16000`); the `/speak` output path stays 24 kHz
+- `clipstart` carries `latencyMs` (trigger → audible) and, for streamed replies,
   `turnLatencyMs` (caller stopped talking → agent audible) for the HUD pill
-- `userSpeaking(true/false)` ← the Voice Agent's `input.speech.started` /
-  `input.speech.stopped`: the line that's playing steps back -12 dB instead of talking
+- `userSpeaking(true/false)`: the line that's playing steps back -12 dB instead of talking
   over the caller, and queued lines wait until they stop. A **critical** alert never
   yields (`yieldPriorities`) — agonal-breathing must be heard over a panicking rescuer
 - **Mic leak measured Sep 17** (web/leak-test.html; MacBook built-in speakers + mic, Chrome
   152, demo volume, quiet room): noise -55.2 · app voice with echo cancellation -48.6 ·
   without -16.4 · rescuer's shout -9.9 dBFS (p95). Echo cancellation removes 32 dB; the
   shout is 38.7 dB above the leak; the leak is 6.6 dB above room noise. Conclusion:
-  `micGate: 'off'` is viable **together with** the backend text filter — Rana built the
-  filter and the controller default is `'off'` since Sep 17
-- `micGate` option — **the open question for barge-in**: `'mute'` (current) sends silence
-  while our voice plays, which is safe but deaf: the Voice Agent can't report that the
-  caller started speaking, so nobody can interrupt a 6-8 s protocol line. `'attenuate'`
-  (-18 dB) lets a shout through; `'off'` relies on echo cancellation. Measure the leak on
-  the demo laptop ("Mic → STT test" on the bench) before choosing. A third option, for
-  the backend: keep the mic open and drop transcripts that match the line we are
-  speaking at that moment — we know the text and the exact timing
+  `micGate: 'off'` is viable **together with** the backend text filter — the filter exists
+  and the controller default is `'off'` since Sep 17
+- `micGate` option, resolved Sep 17: `'mute'` sends silence while our voice plays, which is
+  safe but deaf — nobody can interrupt a 6-8 s protocol line. `'attenuate'` (-18 dB) lets a
+  shout through; `'off'` relies on echo cancellation plus the backend dropping transcripts
+  that match the line being spoken at that moment. `'off'` is the default
 
 ## Team progress
 
-**Sep 17, Rana — "Agent #1" status (WhatsApp group):**
+**Sep 17, Agent #1 status (WhatsApp group):**
 - Intent routing ~1.48 ms (p99 3.04 ms) — the router alone, not end-to-end
 - "10 life-threatening crises": cardiac arrest, arterial bleed, choking, overdose,
-  anaphylaxis, seizure, stroke, … marked complete. **Our audio covers CPR only (11 clips)
-  — every other protocol needs its own pre-recorded lines; texts not received yet**
+  anaphylaxis, seizure, stroke, … marked complete. At this point our audio covered CPR
+  only (11 clips); the other protocols needed their own lines — resolved Sep 21
 - Agonal-gasping override, neck-tourniquet guard (direct pressure / packing instead),
   MARCH triage, limb + bystander detection (RIGHT_THIGH, LEFT_ARM…)
-- Multilingual: en, es, ur/hi listed — **Rana, Sep 17: the demo is English only**, the
-  multilingual part gets changed. Our English lines are enough
-- STT: **AssemblyAI Universal-3.5 Pro**, medical vocabulary boosted (answers the open
-  "which model" question). Unclear whether Agent #1 runs on the Voice Agent API or on
-  streaming STT — README / architecture card say Voice Agent API
-- "911 CAD dispatch — real GPS + street address + live mobile push alerts — Verified
-  Live". A real 911 CAD integration isn't something a hackathon can have; asked to label
-  it as simulated in the video
+- Multilingual: en, es, ur/hi listed — **Sep 17: the demo is English only**. Our English
+  lines are enough
+- STT: **AssemblyAI Universal-3.5 Pro**, medical vocabulary boosted
+- The 911 CAD feature was first described as live. Raised that a hackathon build can't
+  integrate with real dispatch, and asked for it to be labelled simulated — agreed Sep 18,
+  and the UI label shipped in PR #8
 - 45/45 tests passing
-- Rana, privately: liked the agent spec and the pitch line
 
-**Sep 17, Rana — locked decisions (answers to the spec review):**
-- The Voice Agent never gives medical instructions; its conversational replies are
-  muted during an active protocol. It only calls tools (`lock_protocol`,
-  `request_probe`), understands questions, and speaks after EMS arrive
+**Sep 17, locked decisions (answers to the spec review):**
+- The conversational agent never gives medical instructions; its replies are muted during
+  an active protocol. It calls tools (`lock_protocol`, `request_probe`), understands
+  questions, and speaks after EMS arrive
 - Common crisis questions (ribs, tired, vomit…) → pre-recorded `qa_*` clips, same voice
 - Scope: cardiac arrest is the polished flagship; arterial bleeding, anaphylaxis and
   overdose are shown as "plug-and-play extensible clinical engines"
 - 3 kHz click and -4 dB duck: approved and locked
 - Mic open during playback + backend echo filter (string similarity against the line
   being spoken): implemented
-- 24 kHz PCM16 supported; "100% offline" claim dropped
-- The latency indicator shows their routing time (1.2–2.5 ms). Suggested: show it next
-  to the audio time (`clipstart` `latencyMs`, ~20 ms) so it isn't read as end-to-end
-- Rana asked for the `/speak` code and the gate rules to put into `server/main.py`
-- Still open: which protocols' texts to render beyond CPR, whether 911 dispatch is
-  simulated, Voice Agent API vs Universal-3.5 Pro streaming, the Step 1 AED wording
+- 24 kHz PCM16 supported; the "100% offline" claim dropped
+- The latency indicator shows routing time (1.2–2.5 ms). Suggested showing it next to the
+  audio time (`clipstart` `latencyMs`, ~20 ms) so it isn't read as end-to-end
+- `/speak` code and the gate rules requested for `server/main.py`
 
-**Sep 18, Rana — the real architecture (three agents) and the open answers:**
+**Sep 18 — the real architecture (three agents):**
 - **Not the Voice Agent API.** Agent #1 runs on **AssemblyAI Universal-3.5 Pro streaming**
   (`wss://streaming.assemblyai.com/v3/ws`) with local triage (inverted keyword index +
-  regex, MARCH, agonal detector), 1.44 ms average. README and the architecture card had
-  to be corrected. **Mic frames for that socket are 16 kHz**, not 24 kHz: pass
+  regex, MARCH, agonal detector), 1.44 ms average. The README and the architecture card
+  were corrected to match. **Mic frames for that socket are 16 kHz**, not 24 kHz: pass
   `sampleRate: 16000` to `micToPcm16` (our `/speak` output stays 24 kHz)
 - **Agent #2 "Safety Coach"** is our audio layer + an SVG anatomical manikin (not the 3D
   body from the master plan): sternum displacement and a ripple locked to each beat, plus
-  an AHA 2-minute fatigue timer that prompts a rescuer swap — **that timer line has no
-  clip yet**
+  an AHA 2-minute fatigue timer that prompts a rescuer swap
 - **Agent #3 "Clinical Companion"**: Groq LPU (qwen) at 180–290 ms + our `/speak`, with
   the section-4 gate and the deterministic micro-Q&A as offline fallback
 - **911 dispatch is simulated by default** (ECHO packet, Medic-4, 4 min ETA, live
   reverse-geocoded GPS, real nearby AED data); optional live relays (RAPIDSOS, Twilio,
-  ntfy) behind `.env`. Video needs a "simulated dispatch" label, and the live relays must
-  stay off during the demo
+  ntfy) behind `.env`. The video needs a "simulated dispatch" label, and the live relays
+  must stay off during the demo
 - **Exact engine wording** for steps 1–3 received; AED is *not* in step 1. Our clips are
   re-rendered to match word for word, because the echo filter compares texts
 - Latency pill: "routing 1.5 ms · voice 20 ms" — as suggested
 - `report_event rescuer_exhausted` → `qa_tired`, with the companion as fallback
 
 **Sep 21, the live app** — https://keepalive-dpt7.onrender.com (Render), repo
-`ranazain9/keepalive` now **public with an MIT LICENSE**, README says "simulated CAD
+`ranazain9/keepalive` **public with an MIT LICENSE**, README says "simulated CAD
 dispatch". A React cockpit (`client/src`) replaced `client_test.html`: three themes, a
 Three.js scene after all (`client/public/models/*.glb`), a 2.2" depth gauge, a 110 BPM
 ring, an EMS handoff modal, and a "70s Video Take Helper" that replays my shot list
 through `simulateVoice()` — REST, not the mic, so the film take must use the real mic path.
-- **Both clients speak through `window.speechSynthesis`** (`client/src/hooks/useRescueState.js`,
-  `EMSHandoverModal.jsx`): the browser's robot voice, different on every machine. Our clips
-  are not wired in. This is the biggest quality gap for the video
+- **Both clients spoke through `window.speechSynthesis`** (`client/src/hooks/useRescueState.js`,
+  `EMSHandoverModal.jsx`): the browser's built-in voice, different on every machine. Our
+  clips were not wired in — this was the main gap for the video, closed by PR #1
 - Their metronome is `setInterval` + a per-click oscillator. **Measured on the live page
   with both WebGL canvases rendering: 110.09 BPM, worst single-beat error 2.9 ms** — good
   enough; no reason to push our scheduler on timing grounds alone
 - Mic path is correct: downsample to 16 kHz PCM16, plus a word-overlap echo filter
-- Visible typo in the HUD: `LATITUDE: 0.8MS` (`client/src/components/TopTelemetryBar.jsx:55`)
-  — it means latency, and it will be on screen in the video
-- Still open from my README review: `py -3.13` in the quickstart (Windows only),
-  `.env.example` missing `GROQ_API_KEY`/`CAD_PROVIDER`, "100% Offline Capable" for Agent #1,
-  and the UI itself never says the dispatch is simulated
+- The HUD label read `LATITUDE: 0.8MS` where latency was meant
+  (`client/src/components/TopTelemetryBar.jsx:55`) and would have been on screen in the
+  video — fixed in PR #8, now `TRIAGE ROUTING:`
+- From my README review: `py -3.13` in the quickstart (Windows only), `.env.example`
+  missing `GROQ_API_KEY`/`CAD_PROVIDER`, "100% Offline Capable" for Agent #1, and the UI
+  itself never saying the dispatch is simulated — the last one fixed in PR #8
 - Spoken vs on-screen text differ in step 3: `instruction` says "at least 2 inches",
-  `spoken_voice_text` says "two inches"
+  `spoken_voice_text` says "two inches". The clips follow `spoken_voice_text` because the
+  echo filter compares against it
 
 **Sep 21, the whole engine is rendered in Sarah's voice.** `tools/sync_engine_lines.py`
-parses his `protocols.py` (`audio_cue_id` + `spoken_voice_text`) and
-`micro_qa_engine.py` into `tools/engine_lines.py`, which `render_directives.py` merges
-into `DIRECTIVES`. **46 engine lines + our original 12 = 58 clips**, all -14 LUFS / -1.3 dBTP,
-keyed by *his* ids, so the backend can ask for a clip by the name it already uses:
-21 protocol directives (adult/child/infant CPR, choking ×3, bleed, anaphylaxis, overdose)
-and 26 micro-Q&A answers. Number-heavy lines verified by transcribing them back.
-Re-run the sync after he edits a line: it prints exactly what drifted.
+parses `protocols.py` (`audio_cue_id` + `spoken_voice_text`) and `micro_qa_engine.py`
+into `tools/engine_lines.py`, which `render_directives.py` merges into `DIRECTIVES`.
+**46 engine lines + our original 12 = 58 clips**, all -14 LUFS / -1.3 dBTP, keyed by the
+backend's own ids, so it can ask for a clip by the name it already uses: 21 protocol
+directives (adult/child/infant CPR, choking ×3, bleed, anaphylaxis, overdose) and
+26 micro-Q&A answers. Number-heavy lines verified by transcribing them back.
+Re-run the sync after any line is edited upstream: it prints exactly what drifted.
+
+**Sep 22 — the first two PRs** (push access granted Sep 20):
+- **#1 `feat/human-voice-clips`** — 58 clips (3.0 MB Opus) in `client/public/audio`,
+  `client/src/audio/clipVoice.js` (lookup by the backend's own `asset_id`, else exact text),
+  the hook tries a clip first, browser speech stays as the fallback, `main.py` mounts
+  `/audio`. Verified against their server: steps 1–3 and the paramedic line play from clips
+- **#2 `feat/live-answers-same-voice`** (stacked on #1) — `/speak` + the safety gate inside
+  the backend, so Groq's unscripted answers are voiced as Sarah. Order: clip → /speak →
+  browser. No key → router not mounted → 404 → client stops asking → previous behaviour.
+  Measured in their backend: upstream 125 ms, first sound 139 ms
+- Two real bugs found by testing: the client always sent `protocol_state: 'active'`, so the
+  gate cut the paramedic line as `too_long`; and a PCM chunk at an odd byte offset made
+  `Int16Array` throw and abandoned the stream mid-answer. Both fixed in #2
+- Their `unittest discover -s server/tests` stays 60/60; our 29 pytest tests live in
+  `server/tests_voice`
+- **`net::ERR_ABORTED` on a streamed `/speak` response is a devtools artefact**, not a
+  failure — a direct call that demonstrably played audio is logged the same way
+- **ntfy.sh fires by default**: `NTFY_TOPIC` has a hardcoded value in `config.py`, so a
+  real push goes out even with `CAD_PROVIDER=MOCK`. Flagged in #2 — kept off while filming
+- Sep 21: browser `speechSynthesis` was the default because no paid ElevenLabs tier was
+  available. I offered a dedicated TTS-only key from my own account, to live only in
+  Render's env vars and be rotated after Sep 30
 
 **Sep 26–28 — the live app moved to https://keepalive-fmdh.onrender.com** (the old
 `keepalive-dpt7` service died with 503s). Five more PRs, all merged: #3 the EMS briefing in
@@ -291,88 +315,27 @@ itself, so the handover briefing speaks in Sarah's voice on a reloaded page too.
 every merge. The shoot is a three-person scene filmed on a phone: storyboard, camera plan
 and animatic in `video/assets/`.
 
-**Sep 22 — two PRs open in Rana's repo** (push access granted Sep 20):
-- **#1 `feat/human-voice-clips`** — 58 clips (3.0 MB Opus) in `client/public/audio`,
-  `client/src/audio/clipVoice.js` (lookup by the backend's own `asset_id`, else exact text),
-  the hook tries a clip first, browser speech stays as the fallback, `main.py` mounts
-  `/audio`. Verified against their server: steps 1–3 and the paramedic line play from clips
-- **#2 `feat/live-answers-same-voice`** (stacked on #1) — `/speak` + the safety gate inside
-  their backend, so Groq's unscripted answers are voiced as Sarah. Order: clip → /speak →
-  browser. No key → router not mounted → 404 → client stops asking → today's behaviour.
-  Measured in their backend: upstream 125 ms, first sound 139 ms
-- Two real bugs found by testing: the client always sent `protocol_state: 'active'`, so the
-  gate cut the paramedic line as `too_long`; and a PCM chunk at an odd byte offset made
-  `Int16Array` throw and abandoned the stream mid-answer. Both fixed in #2
-- Their `unittest discover -s server/tests` stays 60/60; our 29 pytest tests live in
-  `server/tests_voice`
-- **`net::ERR_ABORTED` on a streamed `/speak` response is a devtools artefact**, not a
-  failure — a direct call that demonstrably played audio is logged the same way
-- **ntfy.sh fires by default**: `NTFY_TOPIC` has a hardcoded value in their `config.py`, so a
-  real push goes out even with `CAD_PROVIDER=MOCK`. Flagged in #2 — must be off while filming
-- Rana chose browser `speechSynthesis` over our voice on Sep 21 ("no paid ElevenLabs tier");
-  the user offered a dedicated TTS-only key from his own account, to live only in Render's
-  env vars and be rotated after Sep 30
+**Sep 30 — PR #8 "Say only what we can stand behind"**, merged and live: `SIMULATED
+911 CAD:` in the UI, `NEMSIS v3.5-style record · demo data · not a certified ePCR`,
+`SCENE SECURED` removed, and the `LATITUDE` label replaced with `TRIAGE ROUTING:`.
+Verified in the deployed bundle, not just in the merge.
 
-## Road to submission (plan as of Sep 17)
+## Final state (Sep 30 — submitted)
 
-Deadline Sep 30, 17:00 CEST — submit on Sep 28–29.
+- Submitted and accepted before the deadline. Live app: https://keepalive-fmdh.onrender.com
+- All 8 PRs merged and confirmed present in the deployed bundle
+- 58 clips in one voice; browser `speechSynthesis` is the fallback, not the default
+- This repository published as https://github.com/Lawzz1/keepalive-voice-layer (MIT),
+  linked from the main project as the individual contribution
+- **Open: rotate the ElevenLabs key.** The same key is in Render's env vars and in the
+  local `.env`. Judging does not need it — without it `/speak` returns 404 and the client
+  falls back to clips, which are served as static files
 
-1. **Sep 17–20, after Rana's answers:** re-render Step 1 if the AED goes into it; align the
-   architecture card + README (Voice Agent API vs Universal-3.5 Pro); "simulated
-   dispatch" label if 911 is simulated; help wire `/speak` into `server/main.py`
-2. **Sep 21–24, with the dashboard:** wire the controller in — backend events →
-   `play(id)`, speech start/stop → `userSpeaking()`, live answers →
-   `playPcmResponse()`, 3D hands → `beatPhase()`; end-to-end run; HUD latency pill with
-   live numbers
-3. **Sep 25–27, filming:** leak test in the recording room; the opening shot of a real
-   person on the floor; the live run in one take, twice (a teammate as the caller);
-   close-ups (latency pill, timeline, EMS card). Dashboard footage due **Sep 27**
-4. **Sep 27–29, edit + submit:** edit per `video/assets/EDIT_PLAN.md`; lablab materials
-   (title, description, cover, video link, public MIT repo — the audio layer has to go
-   into Rana's repo, ideally a live demo link); submit; ask friends to vote
+## Superseded: Voice Agent API notes (Sep 16–18)
 
-Biggest risk: the dashboard + 3D landing late. Also needed: access to Rana's repo.
+Kept because the wire format is worth having written down if the project ever moves to
+the Voice Agent API. Agent #1 runs on Universal-3.5 Pro streaming instead (Sep 18).
 
-## Open questions for Rana
-
-- **One voice everywhere** (the user's requirement, Sep 17) — proposed design in
-  `docs/agent-spec.md`, not yet agreed with Rana: the Voice Agent never speaks itself; it
-  calls a `say(text)` tool, the backend runs a deterministic safety gate on the text, then
-  voices it as Sarah with ElevenLabs Flash (`pcm_24000`, streamed) and the browser plays
-  it with `ac.playPcmResponse(res)`. `reply.audio` is ignored. Measured Sep 17: first
-  audio ~220 ms (196–319), stream ~1.7 dB quieter than the clips (`streamGainDb: 1.7`).
-  The ElevenLabs key stays on the backend. The spec also has the agent's system prompt,
-  tool schemas and a 30-question test list
-- Voice Agent API integration (adopted Sep 16): does its TTS voice match the
-  pre-rendered voice? (No ElevenLabs/custom voice option found in the docs — hence the
-  `say` tool design above.) How does agent audio reach the browser controller, so a critical
-  line can cut the agent off mid-answer? How does our mic gate coexist with its
-  barge-in / turn detection?
-
-- Does a `response` line duck the metronome? The spec says it "plays over the beat";
-  the controller ducks it for now (`DEFAULTS.duck.response`)
-- Gate tail length — 250 ms is a guess, needs a test on the demo laptop (its mic hears
-  its own speakers). Use "Mic → STT test" on the bench
-- Metronome clicks leak into the mic between lines (the gate only covers the voice).
-  Relying on getUserMedia echoCancellation — check on the demo laptop how much survives
-
-## STT integration
-
-STT is live during the demo (team, Sep 12). The STT sender should take
-`ac.gateMic(micStream)` instead of the raw mic: silence while a line is audible, mic
-otherwise, stream never stops. Request the mic with `{ echoCancellation: true }`.
-
-Answers from Rana (Sep 13):
-- The pipeline has no fixed event names: it reads what the caller says and decides
-- LLM not chosen: Claude or GPT-4o mini if the hackathon provides an AI/ML API key,
-  otherwise gpt-oss-120b or Llama 3.3 70B
-- Video: team target ~3:00, never over 4:00 (submission limit 5:00). Script is 2:30
-  on paper; the rest is buffer for the live run
-- Still unanswered (Rana answers the morning of Sep 14): AssemblyAI model, the
-  backend → browser contract / where live-answer TTS runs, who plays the caller,
-  the "at least two inches" wording
-
-Voice Agent API wire format (AssemblyAI events reference, checked Sep 16):
 - Mic in: `input.audio` with `audio` = base64 PCM16 mono **24 kHz** (not 16 kHz)
 - Agent voice out: `reply.audio` chunks, `data` = base64 PCM16; `reply.started` / `reply.done`
   (`status`: completed | interrupted); captions via `transcript.agent.delta` (`start_ms`, `end_ms`)
@@ -382,8 +345,32 @@ Voice Agent API wire format (AssemblyAI events reference, checked Sep 16):
   stop its playback locally. The agent replies to every user turn by default — it must
   not talk over the deterministic engine (tool-first prompt, or mute agent replies
   while a protocol line is active)
-- Measured controller trigger→sound on a MacBook: 21 ms idle, 33 ms for a critical cut-in
+- No ElevenLabs/custom voice option found in the docs, which is why `docs/agent-spec.md`
+  proposes a `say(text)` tool instead: the agent never speaks itself, the backend gates the
+  text and voices it as Sarah, and the browser plays it with `ac.playPcmResponse(res)`.
+  Measured Sep 17: first audio ~220 ms (196–319), stream ~1.7 dB quieter than the clips
+  (`streamGainDb: 1.7`). The ElevenLabs key stays on the backend. That design is what
+  shipped in PR #2
 
-Proposed backend → browser contract (not agreed yet): over a WebSocket, the backend
-sends `{"play": "<clip id>"}` for protocol lines → `ac.play(id)`; live answers
-arrive as text or audio → `ac.playBuffer(...)`.
+## Still open (audio layer)
+
+- Does a `response` line duck the metronome? The spec says it "plays over the beat";
+  the controller ducks it (`DEFAULTS.duck.response`)
+- Gate tail length — 250 ms is a guess; untested on the demo laptop. Use "Mic → STT test"
+  on the bench. Moot while `micGate` is `'off'`
+- Metronome clicks leak into the mic between lines (the gate only covers the voice).
+  Relying on getUserMedia `echoCancellation`
+
+## STT integration
+
+STT is live during the demo (team, Sep 12). Request the mic with
+`{ echoCancellation: true }` and feed the socket from `micToPcm16(micStream,
+{ sampleRate: 16000, onFrame })` — silence while a line is audible if the gate is on,
+mic otherwise, stream never stops.
+
+Answers from Rana (Sep 13):
+- The pipeline has no fixed event names: it reads what the caller says and decides
+- Video: team target ~3:00, never over 4:00 (submission limit 5:00). Script is 2:30
+  on paper; the rest is buffer for the live run
+
+Measured controller trigger→sound on a MacBook: 21 ms idle, 33 ms for a critical cut-in.
